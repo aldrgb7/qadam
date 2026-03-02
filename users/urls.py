@@ -10,7 +10,7 @@ urlpatterns = [
 
     # 2. Регистрация и выход
     path('register/', views.register, name='register'),
-    path('verify-email/', views.verify_email, name='verify_email'),
+    # path('verify-email/', views.verify_email, name='verify_email'),
     path('logout/', views.logout_view, name='logout'),
 
     # 3. Логин (вход)

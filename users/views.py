@@ -296,18 +296,24 @@ def get_messages(request, username):
 
 # --- БЛОГ, ВЕРИФИКАЦИЯ И ПРОЧЕЕ ---
 
+from django.contrib.auth import login # убедись, что этот импорт есть вверху файла
+
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            code = str(random.randint(100000, 999999))
-            request.session['reg_data'] = form.cleaned_data
-            request.session['reg_password'] = form.cleaned_data.get('password')
-            request.session['email_code'] = code
-            request.session['reg_role'] = request.POST.get('role', 'student')
-            send_mail('Код QADAM', f'Ваш код: {code}', settings.EMAIL_HOST_USER, [form.cleaned_data.get('email')])
-            return redirect('verify_email')
-    else: form = CustomUserCreationForm()
+        if form.status_code == 200: # или просто if form.is_valid():
+            if form.is_valid():
+                user = form.save(commit=False)
+                user.is_active = True  # Сразу делаем пользователя активным
+                user.save()
+                
+                # Автоматически логиним пользователя после регистрации
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                
+                # Перенаправляем сразу в профиль или на главную
+                return redirect('profile') 
+    else:
+        form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
 
 def verify_email(request):
