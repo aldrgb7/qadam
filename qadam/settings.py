@@ -96,6 +96,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
+
+# Добавляем вот эту строку (это папка, куда сервер соберет все файлы):
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 STATICFILES_DIRS = [BASE_DIR / 'static']  # Папка static в корне
 
 # Default primary key field type
