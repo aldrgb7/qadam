@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import dj_database_url  # <--- ДОБАВЛЕНО ДЛЯ RENDER
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # <--- ДОБАВЛЕНО: ЧТОБЫ БЫЛ КРАСИВЫЙ ДИЗАЙН НА ХОСТИНГЕ
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,6 +73,11 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+# --- МАГИЯ RENDER: ПОДКЛЮЧЕНИЕ К ОНЛАЙН-БАЗЕ ---
+db_from_env = dj_database_url.config(conn_max_age=600)
+if db_from_env:
+    DATABASES['default'].update(db_from_env)
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -113,8 +120,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'aldiargabitov53@gmail.com'
-EMAIL_HOST_PASSWORD = 'ewij ieqd fzck mpod' 
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'aldiargabitov53@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ewij ieqd fzck mpod')
 
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend',  # Наш новый способ
