@@ -117,7 +117,14 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 # --- НАСТРОЙКИ ПОЧТЫ (SMTP) ---
 # Для защиты переключаем на вывод в консоль, чтобы избежать таймаутов от Google
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# --- НАСТРОЙКИ ПОЧТЫ (SMTP) - ПОПЫТКА ЧЕРЕЗ SSL ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465                  # 587-нің орнына 465 қоямыз
+EMAIL_USE_SSL = True              # TLS орнына SSL қосамыз
+EMAIL_USE_TLS = False             # TLS өшіреміз
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'aldiargabitov53@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ewij ieqd fzck mpod')
 
 # Эти строки можешь просто закомментировать (поставить # в начале) или оставить, они теперь не влияют
 # EMAIL_HOST = 'smtp.gmail.com'
