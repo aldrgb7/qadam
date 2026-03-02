@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .about-container { max-width: 1200px; margin: 40px auto 80px auto; padding: 0 20px; }
+
+    /* --- HERO СЕКЦИЯ --- */
+    .about-hero {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: white; padding: 60px 40px; border-radius: 24px;
+        text-align: center; position: relative; overflow: hidden;
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.2); margin-bottom: 50px;
+    }
+    .about-hero::after { content: ''; position: absolute; top: -50px; right: -50px; width: 250px; height: 250px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .about-hero::before { content: ''; position: absolute; bottom: -80px; left: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+    
+    .hero-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-weight: 800; font-size: 14px; margin-bottom: 20px; backdrop-filter: blur(5px); color: #ffffff !important; }
+.about-hero h1 { font-size: 46px; font-weight: 900; margin: 0 0 20px 0; position: relative; z-index: 2; color: #ffffff !important; }
+.about-hero p { font-size: 18px; max-width: 700px; margin: 0 auto; opacity: 0.9; line-height: 1.6; position: relative; z-index: 2; color: #ffffff !important; }
+    /* --- СТАТИСТИКА (ЖИВЫЕ ЦИФРЫ) --- */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 60px; }
+    .stat-card {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        padding: 40px 20px; border-radius: 24px; text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-5px); border-color: var(--primary-blue); box-shadow: 0 15px 35px rgba(37, 99, 235, 0.1); }
+    .stat-icon { font-size: 40px; color: #3b82f6; margin-bottom: 15px; }
+    .stat-num { font-size: 48px; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; line-height: 1; }
+    .stat-label { font-size: 15px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* --- СЕКЦИЯ МИССИИ И АВТОРА --- */
+    .mission-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
+    
+    .mission-text h2 { font-size: 32px; font-weight: 900; color: var(--text-main); margin-bottom: 20px; }
+    .mission-text p { font-size: 16px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 20px; }
+    
+    .mission-features { list-style: none; padding: 0; margin: 30px 0 0 0; }
+    .mission-features li { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; font-size: 16px; font-weight: 600; color: var(--text-main); }
+    .mission-features i { color: #10b981; font-size: 20px; background: rgba(16, 185, 129, 0.1); padding: 8px; border-radius: 50%; }
+
+    /* Карточка Автора */
+    .author-card {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        padding: 40px; border-radius: 24px; text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03); position: relative; overflow: hidden;
+    }
+    .author-bg { position: absolute; top: 0; left: 0; width: 100%; height: 120px; background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899); opacity: 0.1; }
+    .author-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--bg-card); box-shadow: 0 10px 20px rgba(0,0,0,0.1); object-fit: cover; position: relative; z-index: 2; margin-bottom: 20px; }
+    .author-name { font-size: 24px; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; }
+    .author-role { font-size: 14px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; margin-bottom: 20px; display: block; }
+    .author-bio { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 25px; }
+    .author-socials { display: flex; justify-content: center; gap: 15px; }
+    .social-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--bg-body); color: var(--text-main); border-radius: 12px; text-decoration: none; transition: 0.2s; font-size: 18px; border: 1px solid var(--border-color); }
+    .social-btn:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); transform: translateY(-3px); }
+
+    /* 🔥🔥🔥 ТЕМНАЯ ТЕМА 🔥🔥🔥 */
+    body.dark-mode .stat-card, body.dark-mode .author-card {
+        background: linear-gradient(145deg, #1e293b, #151e2f);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    body.dark-mode .stat-card:hover { border-color: #3b82f6; box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25); }
+    body.dark-mode .social-btn { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+    body.dark-mode .social-btn:hover { background: #3b82f6; color: white; }
+    body.dark-mode .mission-features i { background: rgba(16, 185, 129, 0.2); }
+    body.dark-mode .author-bg { opacity: 0.15; }
+
+    @media (max-width: 900px) {
+        .stats-grid { grid-template-columns: 1fr; }
+        .mission-layout { grid-template-columns: 1fr; }
+        .about-hero h1 { font-size: 32px; }
+    }
+</style>
+
+<div class="about-container">
+    
+    <div class="about-hero">
+        <span class="hero-badge">Educational Platform</span>
+        <h1>Шаг за шагом к новым знаниям</h1>
+        <p>QADAM — это современная образовательная платформа, созданная для того, чтобы сделать обучение доступным, интересным и эффективным. Мы стираем границы между сложной теорией и реальной практикой.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fa-solid fa-users stat-icon"></i>
+            <h3 class="stat-num">{{ total_users|default:"1" }}</h3>
+            <span class="stat-label">Студентов с нами</span>
+        </div>
+        <div class="stat-card">
+            <i class="fa-solid fa-graduation-cap stat-icon"></i>
+            <h3 class="stat-num">{{ total_courses|default:"0" }}</h3>
+            <span class="stat-label">Доступных курсов</span>
+        </div>
+        <div class="stat-card">
+            <i class="fa-solid fa-video stat-icon"></i>
+            <h3 class="stat-num">{{ total_lessons|default:"0" }}</h3>
+            <span class="stat-label">Обучающих уроков</span>
+        </div>
+    </div>
+
+    <div class="mission-layout">
+        
+        <div class="mission-text">
+            <h2>Почему именно QADAM?</h2>
+            <p>Идея проекта родилась из простой мысли: многие образовательные ресурсы слишком сложны, перегружены "водой" или выглядят устаревшими. Мы захотели создать место, где учиться будет по-настоящему приятно.</p>
+            <p>Наше название "QADAM" (Шаг) символизирует путь развития. Необязательно знать всё сразу, главное — делать правильные шаги каждый день.</p>
+            
+            <ul class="mission-features">
+                <li><i class="fa-solid fa-check"></i> Никакой скучной теории, только суть</li>
+                <li><i class="fa-solid fa-check"></i> Современный и удобный интерфейс</li>
+                <li><i class="fa-solid fa-check"></i> Геймификация: зарабатывай XP и соревнуйся</li>
+                <li><i class="fa-solid fa-check"></i> Адаптация под любые устройства</li>
+            </ul>
+        </div>
+
+        <div class="author-card">
+            <div class="author-bg"></div>
+            
+            {% if author and author.avatar %}
+                <img src="{{ author.avatar.url }}" alt="{{ author.name }}" class="author-avatar">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ author.name|default:'Aldiyar' }}&background=1e293b&color=fff&size=200" alt="Author" class="author-avatar">
+            {% endif %}
+            
+            <h3 class="author-name">{{ author.name|default:"Aldiyar" }}</h3>
+            <span class="author-role">{{ author.role|default:"Founder & Lead Developer" }}</span>
+            
+            <p class="author-bio">
+                {% if author and author.bio %}
+                    {{ author.bio|linebreaksbr }}
+                {% else %}
+                    Создатель платформы QADAM. Python/Django разработчик, увлеченный созданием полезных EdTech продуктов и современным UI/UX дизайном.
+                {% endif %}
+            </p>
+            
+            <div class="author-socials">
+                {% if author and author.github_link %}
+                    <a href="{{ author.github_link }}" target="_blank" class="social-btn"><i class="fa-brands fa-github"></i></a>
+                {% elif not author %}
+                    <a href="#" class="social-btn"><i class="fa-brands fa-github"></i></a>
+                {% endif %}
+
+                {% if author and author.telegram_link %}
+                    <a href="{{ author.telegram_link }}" target="_blank" class="social-btn"><i class="fa-brands fa-telegram"></i></a>
+                {% elif not author %}
+                    <a href="#" class="social-btn"><i class="fa-brands fa-telegram"></i></a>
+                {% endif %}
+
+                {% if author and author.instagram_link %}
+                    <a href="{{ author.instagram_link }}" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a>
+                {% elif not author %}
+                    <a href="#" class="social-btn"><i class="fa-brands fa-instagram"></i></a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

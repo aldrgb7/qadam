@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .auth-container { 
+        max-width: 400px; 
+        margin: 80px auto; 
+        background: var(--bg-card); 
+        padding: 40px; 
+        border-radius: 16px; 
+        box-shadow: 0 10px 25px var(--shadow-card); 
+        text-align: center; 
+        border: 1px solid var(--border-color); 
+    }
+    
+    .auth-title { 
+        font-size: 24px; font-weight: 800;
+        margin-bottom: 30px; 
+        color: var(--text-main); 
+    }
+    
+    .form-group { margin-bottom: 20px; text-align: left; }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-secondary); 
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    /* Стилизуем инпуты, которые генерирует Django */
+    .form-group input { 
+        width: 100%; 
+        padding: 12px 15px; 
+        border: 1px solid var(--border-color); 
+        border-radius: 12px; 
+        box-sizing: border-box; 
+        background: var(--bg-body); 
+        color: var(--text-main); 
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 500;
+        outline: none;
+        transition: 0.2s;
+    }
+    .form-group input:focus {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn-auth { 
+        width: 100%; 
+        padding: 14px; 
+        background: var(--primary-blue); 
+        color: white; 
+        border: none; 
+        border-radius: 12px; 
+        font-weight: 800; 
+        font-size: 16px;
+        cursor: pointer; 
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+    .btn-auth:hover { 
+        background: var(--primary-hover); 
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .auth-footer { 
+        margin-top: 25px; 
+        font-size: 14px; 
+        color: var(--text-secondary); 
+    }
+    .auth-footer a { 
+        color: var(--primary-blue); 
+        text-decoration: none; 
+        font-weight: 700; 
+        transition: 0.2s;
+    }
+    .auth-footer a:hover { color: var(--primary-hover); text-decoration: underline; }
+    
+    .reset-link { margin-bottom: 15px; display: block; font-size: 13px; }
+
+    /* =========================================
+       🔥 АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ 🔥
+       ========================================= */
+    @media (max-width: 500px) {
+        .auth-container {
+            margin: 40px 15px; /* Уменьшаем внешние отступы */
+            padding: 30px 20px; /* Уменьшаем внутренние отступы, чтобы дать больше места инпутам */
+            border-radius: 20px;
+        }
+        .auth-title {
+            font-size: 22px;
+            margin-bottom: 25px;
+        }
+        .form-group input {
+            padding: 14px 15px; /* Делаем инпуты чуть выше для пальцев */
+            font-size: 16px; /* Защита от авто-зума на iOS */
+        }
+        .btn-auth {
+            padding: 15px;
+        }
+    }
+</style>
+
+<div class="auth-container">
+    <h2 class="auth-title">Вход в QADAM</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+            <div style="color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.2);">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-right: 5px;"></i> Неверный логин или пароль
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Логин</label>
+            {{ form.username }}
+        </div>
+        <div class="form-group">
+            <label>Пароль</label>
+            {{ form.password }}
+        </div>
+        <button type="submit" class="btn-auth">Войти <i class="fa-solid fa-arrow-right-to-bracket" style="margin-left: 5px;"></i></button>
+    </form>
+
+    <div class="auth-footer">
+        <a href="{% url 'password_reset' %}" class="reset-link">Забыли пароль?</a>
+        
+        Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a>
+    </div>
+</div>
+{% endblock %}

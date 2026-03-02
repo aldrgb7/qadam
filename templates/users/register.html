@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .auth-container { 
+        max-width: 480px; 
+        margin: 60px auto; 
+        background: var(--bg-card); 
+        padding: 40px; 
+        border-radius: 20px; 
+        box-shadow: 0 15px 35px var(--shadow-card); 
+        text-align: center; 
+        border: 1px solid var(--border-color); 
+    }
+    
+    .auth-title { 
+        font-size: 28px; 
+        font-weight: 800; 
+        margin-bottom: 30px; 
+        color: var(--text-main); 
+    }
+    
+    /* --- СТИЛИ ДЛЯ ВЫБОРА РОЛИ --- */
+    .role-selection {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .role-card {
+        flex: 1;
+        padding: 20px 15px;
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: var(--bg-body);
+        color: var(--text-secondary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .role-card i { font-size: 28px; }
+    .role-card span { font-weight: 600; font-size: 15px; }
+    
+    /* Активное состояние карточки */
+    .role-card.active {
+        border-color: var(--primary-blue);
+        background: rgba(59, 130, 246, 0.05); /* Легкий синий фон */
+        color: var(--primary-blue);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px var(--shadow-card);
+    }
+    
+    /* Темная тема для карточек ролей */
+    body.dark-mode .role-card.active {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+    }
+    /* ---------------------------------- */
+
+    .form-group { margin-bottom: 20px; text-align: left; }
+    
+    .form-group label { 
+        display: block; 
+        margin-bottom: 8px; 
+        font-weight: 700; 
+        color: var(--text-secondary); 
+        font-size: 14px;
+    }
+    
+    .form-group input { 
+        width: 100%; 
+        padding: 14px 15px; 
+        border: 1px solid var(--border-color); 
+        border-radius: 12px; 
+        box-sizing: border-box; 
+        font-size: 15px; 
+        font-weight: 500;
+        font-family: inherit;
+        transition: 0.3s; 
+        background: var(--bg-body); 
+        color: var(--text-main); 
+        outline: none;
+    }
+    
+    .form-group input:focus { 
+        border-color: var(--primary-blue); 
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); 
+    }
+    
+    .helptext { 
+        font-size: 12px; 
+        color: var(--text-muted); 
+        display: block; 
+        margin-top: 6px; 
+        line-height: 1.4; 
+    }
+    
+    .btn-auth { 
+        width: 100%; 
+        padding: 16px; 
+        background: var(--primary-blue); 
+        color: white; 
+        border: none; 
+        border-radius: 12px; 
+        font-size: 16px; 
+        font-weight: 800; 
+        cursor: pointer; 
+        transition: 0.3s; 
+        margin-top: 15px; 
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+    .btn-auth:hover { 
+        background: var(--primary-hover); 
+        transform: translateY(-2px); 
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .bottom-link {
+        margin-top: 25px; 
+        font-size: 14px; 
+        color: var(--text-secondary); 
+    }
+    
+    .bottom-link a { transition: 0.2s; }
+    .bottom-link a:hover { color: var(--primary-hover); text-decoration: underline !important; }
+
+    /* =========================================
+       🔥 АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ 🔥
+       ========================================= */
+    @media (max-width: 500px) {
+        .auth-container {
+            margin: 30px 15px; /* Уменьшаем внешние отступы */
+            padding: 30px 20px; /* Уменьшаем внутренние отступы */
+            border-radius: 20px;
+        }
+        .auth-title {
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        
+        /* Делаем инпуты удобными для пальцев и предотвращаем зум на iOS */
+        .form-group input {
+            padding: 15px; 
+            font-size: 16px; 
+        }
+        
+        /* Карточки выбора роли */
+        .role-card {
+            padding: 15px 10px;
+            gap: 8px;
+        }
+        .role-card i { font-size: 24px; }
+        .role-card span { font-size: 14px; }
+    }
+</style>
+
+<div class="auth-container">
+    <h2 class="auth-title">Регистрация</h2>
+    
+    <div class="role-selection">
+        <div class="role-card active" onclick="selectRole('student', this)">
+            <i class="fa-solid fa-user-graduate"></i>
+            <span>Я Студент</span>
+        </div>
+        <div class="role-card" onclick="selectRole('teacher', this)">
+            <i class="fa-solid fa-chalkboard-user"></i>
+            <span>Я Преподаватель</span>
+        </div>
+    </div>
+    
+    <form method="post" id="registerForm">
+        {% csrf_token %}
+        
+        {{ form.role }} 
+
+        {% for field in form %}
+            {% if field.name != 'role' %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="helptext">{{ field.help_text|safe }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div style="color: #ef4444; font-size: 13px; font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        
+        <button type="submit" class="btn-auth">Создать аккаунт <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
+    </form>
+
+    <div class="bottom-link">
+        Уже есть аккаунт? <a href="{% url 'login' %}" style="color: var(--primary-blue); text-decoration: none; font-weight: 800;">Войти</a>
+    </div>
+</div>
+
+<script>
+    function selectRole(roleValue, element) {
+        // Убираем класс active у всех карточек
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        
+        // Добавляем класс active кликнутой карточке
+        element.classList.add('active');
+        
+        // Находим скрытый input для роли и меняем его значение
+        const roleInput = document.getElementById('id_role');
+        if (roleInput) {
+            roleInput.value = roleValue;
+        }
+    }
+</script>
+{% endblock %}

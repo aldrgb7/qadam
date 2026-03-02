@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .chat-container { max-width: 900px; margin: 30px auto; padding: 0 20px; height: calc(100vh - 150px); display: flex; flex-direction: column; }
+    
+    .chat-card {
+        background: var(--bg-card); border-radius: 24px; border: 1px solid var(--border-color);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; overflow: hidden;
+    }
+    
+    .chat-header {
+        padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; background: var(--bg-body);
+    }
+    .chat-header-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+    .chat-header-name { font-size: 18px; font-weight: 800; color: var(--text-main); margin: 0; }
+    .chat-header-status { font-size: 13px; color: #10b981; font-weight: 700; }
+
+    .chat-messages { flex-grow: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: var(--bg-card); }
+    
+    .msg-bubble { max-width: 70%; padding: 15px 20px; border-radius: 20px; font-size: 15px; line-height: 1.5; font-weight: 500; position: relative; }
+    .msg-time { font-size: 11px; opacity: 0.6; margin-top: 5px; text-align: right; display: block; font-weight: 700; }
+    
+    .msg-received { background: var(--bg-body); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid var(--border-color); }
+    .msg-sent { background: var(--primary-blue); color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 5px 15px rgba(37, 99, 235, 0.2); }
+
+    .chat-input-area { padding: 20px; background: var(--bg-body); border-top: 1px solid var(--border-color); }
+    .chat-form { display: flex; gap: 15px; }
+    .chat-input {
+        flex-grow: 1; padding: 15px 25px; border-radius: 30px; border: 1px solid var(--border-color); background: var(--bg-card);
+        color: var(--text-main); font-size: 15px; font-family: inherit; font-weight: 500; outline: none; transition: 0.2s;
+    }
+    .chat-input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+    
+    .btn-send {
+        background: var(--primary-blue); color: white; border: none; width: 50px; height: 50px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+    }
+    .btn-send:hover { transform: scale(1.1) rotate(10deg); background: #2563eb; }
+</style>
+
+<div class="chat-container">
+    <div class="chat-card">
+        
+        <div class="chat-header">
+            <a href="{% url 'public_profile' other_user.username %}" style="text-decoration: none; display: flex; align-items: center; gap: 15px;">
+                {% if other_user.avatar %}
+                    <img src="{{ other_user.avatar.url }}" class="chat-header-img">
+                {% else %}
+                    <img src="https://ui-avatars.com/api/?name={{ other_user.username }}&background=2563eb&color=fff" class="chat-header-img">
+                {% endif %}
+                <div>
+                    <h3 class="chat-header-name">{{ other_user.first_name|default:other_user.username }}</h3>
+                    <span class="chat-header-status">Студент QADAM</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="chat-messages" id="chatBox">
+            {% for msg in messages_list %}
+                {% if msg.sender == user %}
+                    <div class="msg-bubble msg-sent">
+                        {{ msg.text }}
+                        <span class="msg-time">{{ msg.created_at|date:"H:i" }} {% if msg.is_read %}<i class="fa-solid fa-check-double" style="margin-left: 5px; color: #93c5fd;"></i>{% endif %}</span>
+                    </div>
+                {% else %}
+                    <div class="msg-bubble msg-received">
+                        {{ msg.text }}
+                        <span class="msg-time">{{ msg.created_at|date:"H:i" }}</span>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <div style="text-align: center; color: var(--text-muted); margin: auto; font-weight: 700; opacity: 0.5;">
+                    <i class="fa-regular fa-comments" style="font-size: 50px; margin-bottom: 15px; display: block;"></i>
+                    Здесь пока нет сообщений.<br>Напишите привет! 👋
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="chat-input-area">
+            <form method="POST" class="chat-form">
+                {% csrf_token %}
+                <input type="text" name="text" class="chat-input" placeholder="Написать сообщение..." required autocomplete="off" autofocus>
+                <button type="submit" class="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Прокручиваем чат в самый низ при загрузке страницы
+    const chatBox = document.getElementById('chatBox');
+    chatBox.scrollTop = chatBox.scrollHeight;
+</script>
+{% endblock %}

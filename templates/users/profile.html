@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 🔥 ЭФФЕКТ СВЕЧЕНИЯ И ПАРЕНИЯ 🔥 */
+    .hover-glow-effect { transition: all 0.3s ease !important; border: 1px solid var(--border-color); }
+    .hover-glow-effect:hover { transform: translateY(-7px); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; border-color: var(--primary-blue) !important; }
+    body.dark-mode .hover-glow-effect { border-color: rgba(59, 130, 246, 0.15) !important; }
+    body.dark-mode .hover-glow-effect:hover { border-color: #3b82f6 !important; box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25) !important; }
+
+    /* --- ОСНОВНАЯ СЕТКА --- */
+    .dashboard-container { max-width: 94%; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start; }
+
+    /* --- ЛЕВАЯ КОЛОНКА (ПРОФИЛЬ) --- */
+    .profile-card { background: var(--bg-card); border-radius: 24px; padding: 35px 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: sticky; top: 90px; }
+    .profile-avatar { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid var(--bg-body); box-shadow: 0 8px 20px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .user-name { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 5px; }
+    .user-handle { color: var(--text-secondary); font-size: 15px; margin-bottom: 25px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 8px;}
+    
+    .role-badge { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-student { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .badge-teacher { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+    .btn-edit-modern { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 14px; background: var(--bg-body); color: var(--text-main); font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.3s ease; }
+    .btn-edit-modern:hover { border-color: var(--primary-blue); color: var(--primary-blue); background: rgba(59, 130, 246, 0.08); transform: translateY(-2px); }
+
+    .user-stats-list { margin-top: 30px; text-align: left; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    .stat-row { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-secondary); margin-bottom: 15px; font-weight: 500; }
+    .stat-row i { width: 20px; text-align: center; color: var(--primary-blue); opacity: 0.8; }
+
+    /* --- ПРАВАЯ ЧАСТЬ --- */
+    .main-content { display: flex; flex-direction: column; gap: 30px; }
+
+    .rank-banner { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); border-radius: 24px; padding: 35px; color: white; position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 15px 35px rgba(37, 99, 235, 0.25); border: 1px solid transparent; }
+    .teacher-banner { background: linear-gradient(135deg, #059669 0%, #10b981 100%); box-shadow: 0 15px 35px rgba(16, 185, 129, 0.25); }
+    .rank-banner::before { content: ''; position: absolute; left: -30px; bottom: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .rank-banner::after { content: ''; position: absolute; right: 20%; top: -40px; width: 120px; height: 120px; background: rgba(255,255,255,0.07); border-radius: 50%; }
+
+    .rank-info { z-index: 2; flex-grow: 1; margin-right: 30px; }
+    .rank-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; opacity: 0.9; margin-bottom: 8px; font-weight: 700; }
+    .rank-title { font-size: 34px; font-weight: 900; margin-bottom: 20px; line-height: 1; }
+
+    .xp-container { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 20px; max-width: 450px; backdrop-filter: blur(10px); }
+    .xp-text { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .progress-bar { height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #22c55e; border-radius: 5px; box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+
+    .btn-store-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 14px 30px; border-radius: 14px; font-weight: 800; font-size: 15px; cursor: pointer; z-index: 2; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; white-space: nowrap; text-decoration: none; }
+    .btn-store-gradient:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4); }
+    
+    .btn-teacher-action { background: white; color: #059669; border: none; padding: 14px 30px; border-radius: 14px; font-weight: 800; font-size: 15px; cursor: pointer; z-index: 2; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; text-decoration: none; }
+    .btn-teacher-action:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2); color: #047857; }
+
+    .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+    .content-grid-teacher { grid-template-columns: 1fr; margin-bottom: 10px; }
+
+    .content-box { background: var(--bg-card); border-radius: 24px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); }
+    .box-header { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+    /* 🔥 КНОПКА "ВСЕ КУРСЫ" 🔥 */
+    .btn-all-courses {
+        background: rgba(16, 185, 129, 0.1); color: #10b981; border: none;
+        padding: 8px 15px; border-radius: 10px; font-size: 13px; font-weight: 800;
+        cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-all-courses:hover { background: #10b981; color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
+
+    .course-item { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid var(--border-color); }
+    .course-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .c-icon { width: 55px; height: 55px; background: var(--bg-body); color: var(--primary-blue); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; border: 1px solid var(--border-color); }
+    .c-title { font-weight: 700; font-size: 15px; color: var(--text-main); margin-bottom: 5px; }
+    .c-sub { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .c-percent { font-weight: 800; color: var(--primary-blue); font-size: 16px; margin-left: auto; }
+
+    /* Стили карточки курса преподавателя */
+    .t-course-card { background: var(--bg-body); border: 2px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; flex-wrap: wrap; gap: 15px; }
+    .t-course-card:hover { border-color: #10b981; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.1); }
+    .t-course-stats { display: flex; gap: 15px; font-size: 13px; font-weight: 600; color: var(--text-secondary); flex-wrap: wrap; margin-top: 8px; }
+
+    .cert-item { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); padding: 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; transition: 0.2s; }
+    .cert-item:hover { background: rgba(34, 197, 94, 0.15); transform: translateX(5px); }
+    .cert-title { font-weight: 700; color: #22c55e; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+    .btn-download { color: #22c55e; text-decoration: none; font-size: 20px; opacity: 0.8; transition: 0.2s; }
+    .btn-download:hover { opacity: 1; transform: scale(1.1); }
+
+    .achievements-wrap { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .ach-card { background: var(--bg-body); border-radius: 16px; padding: 20px; text-align: center; border: 2px solid transparent; transition: all 0.3s ease; }
+    .ach-card:hover { border-color: var(--primary-blue); background: var(--bg-card); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .ach-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+    .ach-name { font-size: 12px; font-weight: 700; color: var(--text-secondary); line-height: 1.3; }
+    .ach-locked { opacity: 0.5; filter: grayscale(100%); }
+
+    /* --- МОДАЛЬНЫЕ ОКНА --- */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 9999; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
+    .modal-overlay.active { display: flex; opacity: 1; }
+    .modal-window { background: var(--bg-card); width: 550px; max-width: 92%; padding: 40px; border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); transform: translateY(30px) scale(0.95); transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1); max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color); }
+    .modal-overlay.active .modal-window { transform: translateY(0) scale(1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .modal-title { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-main); }
+    .btn-close { background: none; border: none; font-size: 32px; cursor: pointer; color: var(--text-secondary); transition: 0.2s; line-height: 1; }
+    .btn-close:hover { color: #ef4444; transform: rotate(90deg); }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { width: 100%; padding: 15px 18px; border: 2px solid var(--border-color); background: var(--bg-body); color: var(--text-main); border-radius: 14px; box-sizing: border-box; font-size: 15px; font-weight: 500; transition: all 0.3s ease; }
+    .form-input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); outline: none; background: var(--bg-card); }
+    
+    .name-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .btn-save-gradient { width: 100%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); }
+    .btn-save-gradient:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4); }
+
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+    .shop-item { border: 2px solid var(--border-color); border-radius: 18px; padding: 20px; text-align: center; background: var(--bg-body); transition: 0.3s; }
+    .shop-item:hover { border-color: var(--primary-blue); transform: translateY(-5px); }
+    .btn-buy-modal { width: 100%; padding: 10px; border-radius: 10px; border:none; background: var(--primary-blue); color: white; cursor: pointer; font-size: 13px; font-weight: 700; transition: 0.2s; }
+    .btn-buy-modal:hover { background: #2563eb; }
+    .btn-buy-modal:disabled { background: var(--border-color); color: var(--text-secondary); cursor: not-allowed; opacity: 0.7; }
+
+    /* =========================================
+       🔥 АДАПТИВНОСТЬ ДЛЯ МОБИЛОК 🔥
+       ========================================= */
+    @media (max-width: 1024px) {
+        .dashboard-container { grid-template-columns: 1fr; max-width: 96%; }
+        .profile-card { position: static; display: flex; flex-direction: column; align-items: center; }
+        .content-grid { grid-template-columns: 1fr; }
+        .rank-banner { flex-direction: column; text-align: center; gap: 25px; padding: 30px; }
+        .rank-info { margin-right: 0; width: 100%; }
+        .btn-store-gradient, .btn-teacher-action { width: 100%; justify-content: center; }
+        .achievements-wrap { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+        .dashboard-container { padding: 0 10px; margin-top: 15px; }
+        .profile-avatar { width: 120px; height: 120px; }
+        .content-box { padding: 20px; }
+        .achievements-wrap { grid-template-columns: repeat(2, 1fr); }
+        .rank-title { font-size: 26px; }
+        .course-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .c-percent { margin-left: 0; align-self: flex-start; font-size: 18px; }
+        .cert-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .btn-download { align-self: flex-end; }
+        .modal-window { padding: 25px; }
+        .name-fields-grid { grid-template-columns: 1fr; gap: 0; }
+        .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    <aside class="profile-card hover-glow-effect">
+        {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="profile-avatar">
+        {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=2563eb&color=fff&size=200" class="profile-avatar">
+        {% endif %}
+        
+        <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+        
+        <div class="user-handle">
+            @{{ user.username }}
+            {% if user.is_teacher %}
+                <span class="role-badge badge-teacher">Преподаватель</span>
+            {% else %}
+                <span class="role-badge badge-student">Студент</span>
+            {% endif %}
+        </div>
+
+        <button class="btn-edit-modern" onclick="openModal('editModal')">
+            <i class="fa-solid fa-pen-to-square"></i> Редактировать профиль
+        </button>
+
+        <div class="user-stats-list">
+            <div class="stat-row"><i class="fa-solid fa-envelope"></i> {{ user.email }}</div>
+            <div class="stat-row"><i class="fa-regular fa-calendar-days"></i> С нами с {{ user.date_joined|date:"M Y" }}</div>
+            <div class="stat-row"><i class="fa-solid fa-location-dot"></i> Казахстан</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        {% if user.is_teacher %}
+            <div class="rank-banner teacher-banner hover-glow-effect">
+                <div class="rank-info">
+                    <div class="rank-label">Управление</div>
+                    <div class="rank-title">Кабинет преподавателя</div>
+                    <p style="opacity: 0.9; margin: 0; font-size: 15px;">Создавайте образовательные материалы для студентов.</p>
+                </div>
+
+                <a href="{% url 'create_course' %}" class="btn-teacher-action">
+                    <i class="fa-solid fa-plus"></i> Создать курс
+                </a>
+            </div>
+
+            <div class="content-grid content-grid-teacher">
+                <div class="content-box hover-glow-effect">
+                    
+                    <div class="box-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-chalkboard-user" style="color: #10b981;"></i> Мои авторские курсы
+                        </div>
+                        {% if teacher_courses|length > 1 %}
+                            <button class="btn-all-courses" onclick="openModal('allCoursesModal')">
+                                <i class="fa-solid fa-list"></i> Все курсы ({{ teacher_courses|length }})
+                            </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if teacher_courses %}
+                        {% for t_course in teacher_courses|slice:":1" %}
+                        <div class="t-course-card">
+                            <div>
+                                <div style="font-weight: 800; color: var(--text-main); font-size: 16px;">
+                                    {{ t_course.title }}
+                                </div>
+                                <div class="t-course-stats">
+                                    <span><i class="fa-solid fa-book" style="color: var(--primary-blue);"></i> Уроков: {{ t_course.total_lessons }}</span>
+                                    <span><i class="fa-solid fa-users" style="color: #f59e0b;"></i> Студентов: {{ t_course.students_count }}</span>
+                                    
+                                    {% if t_course.status == 'published' %}
+                                        <span style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> Опубликован</span>
+                                    {% elif t_course.status == 'review' %}
+                                        <span style="color: #3b82f6;"><i class="fa-solid fa-clock"></i> На проверке</span>
+                                    {% else %}
+                                        <span style="color: #ef4444;"><i class="fa-solid fa-pen"></i> Черновик</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <a href="{% url 'add_lesson' t_course.id %}" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 10px 15px; border-radius: 10px; font-weight: 700; text-decoration: none; transition: 0.3s;">
+                                <i class="fa-solid fa-pen-to-square"></i> Управление
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; padding: 20px; background: var(--bg-body); border-radius: 16px; border: 1px dashed var(--border-color);">
+                            <i class="fa-solid fa-folder-open" style="font-size: 32px; color: var(--text-muted); margin-bottom: 10px; display: block;"></i>
+                            <h4 style="color: var(--text-main); margin-bottom: 5px; font-size: 16px;">У вас пока нет курсов</h4>
+                            <a href="{% url 'create_course' %}" style="color: #10b981; font-weight: 800; text-decoration: none; font-size: 14px;">Создать свой первый курс &rarr;</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h3 style="color: var(--text-main); font-weight: 800; margin-top: 10px; margin-bottom: -10px; padding-left: 5px;">
+                <i class="fa-solid fa-user-graduate" style="color: var(--primary-blue); margin-right: 10px;"></i>Режим ученика
+            </h3>
+        {% endif %}
+
+
+        <div class="rank-banner hover-glow-effect">
+            <div class="rank-info">
+                <div class="rank-label">Текущий ранг</div>
+                <div class="rank-title">{{ rank_name }}</div>
+                
+                <div class="xp-container">
+                    <div class="xp-text">
+                        <span>{{ current_xp }} XP</span>
+                        <span style="opacity: 0.8;">Цель: {{ max_xp }} XP</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ xp_percent }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-store-gradient" onclick="openModal('storeModal')">
+                <i class="fa-solid fa-bag-shopping"></i> Qadam Store
+            </button>
+        </div>
+
+        <div class="content-grid">
+            
+            <div class="content-box hover-glow-effect">
+                <div class="box-header">
+                    <div style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-graduation-cap" style="color: var(--primary-blue);"></i> Моё обучение</div>
+                </div>
+
+                {% if completed_courses %}
+                    <div style="margin-bottom: 30px;">
+                        <small style="color: var(--text-secondary); display: block; margin-bottom: 15px; font-weight: 800; letter-spacing: 1px;">СЕРТИФИКАТЫ</small>
+                        {% for course in completed_courses %}
+                        <div class="cert-item">
+                            <span class="cert-title"><i class="fa-solid fa-medal"></i> {{ course.course.title }}</span>
+                            <a href="{% url 'view_certificate' course.id %}" target="_blank" class="btn-download" title="Посмотреть сертификат">
+                                <i class="fa-solid fa-file-arrow-down"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <small style="color: var(--text-secondary); display: block; margin-bottom: 15px; font-weight: 800; letter-spacing: 1px;">В ПРОЦЕССЕ</small>
+                {% if active_courses %}
+                    {% for stat in active_courses %}
+                    <div class="course-item">
+                        <div style="display: flex; gap: 20px; align-items: center;">
+                            <div class="c-icon"><i class="{{ stat.icon }}"></i></div>
+                            <div class="c-info">
+                                <div class="c-title">{{ stat.title }}</div>
+                                <div class="c-sub">Прогресс: {{ stat.completed }} из {{ stat.total }} уроков</div>
+                            </div>
+                        </div>
+                        <div class="c-percent">{{ stat.percent }}%</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-secondary); font-size: 14px; padding: 20px; text-align: center; background: var(--bg-body); border-radius: 12px;">Нет активных курсов.</p>
+                {% endif %}
+            </div>
+
+            <div class="content-box hover-glow-effect">
+                <div class="box-header">
+                    <div style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-trophy" style="color: #ecc94b;"></i> Достижения</div>
+                </div>
+                <div class="achievements-wrap">
+                    <div class="ach-card"><span class="ach-icon">👋</span><span class="ach-name">Добро пожаловать</span></div>
+                    <div class="ach-card {% if current_xp < 20 %}ach-locked{% endif %}"><span class="ach-icon">🚀</span><span class="ach-name">Первый урок</span></div>
+                    <div class="ach-card {% if current_xp < 100 %}ach-locked{% endif %}"><span class="ach-icon">⚡</span><span class="ach-name">Сотня XP</span></div>
+                    <div class="ach-card {% if current_xp < 500 %}ach-locked{% endif %}"><span class="ach-icon">🎓</span><span class="ach-name">Ранг Junior</span></div>
+                    <div class="ach-card {% if current_xp < 1000 %}ach-locked{% endif %}"><span class="ach-icon">🔥</span><span class="ach-name">Ударный режим</span></div>
+                    <div class="ach-card {% if current_xp < 2000 %}ach-locked{% endif %}"><span class="ach-icon">💎</span><span class="ach-name">Коллекционер</span></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h3 class="modal-title">Настройки профиля</h3>
+            <button class="btn-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Никнейм (@)</label>
+                <input type="text" name="username" value="{{ form.username.value }}" class="form-input" placeholder="Ваш никнейм">
+            </div>
+            <div class="name-fields-grid">
+                <div class="form-group">
+                    <label class="form-label">Имя</label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value }}" class="form-input" placeholder="Введите имя">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Фамилия</label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value }}" class="form-input" placeholder="Введите фамилию">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+                <label class="form-label">Сменить фото профиля</label>
+                <input type="file" name="avatar" class="form-input" style="padding: 10px;">
+            </div>
+            <button type="submit" class="btn-save-gradient">Сохранить изменения</button>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="storeModal">
+    <div class="modal-window" style="width: 650px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Qadam Store 🛍️</h3>
+            <button class="btn-close" onclick="closeModal('storeModal')">&times;</button>
+        </div>
+        
+        <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); padding: 15px; border-radius: 12px; font-size: 15px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-wallet"></i> Ваш баланс: <b style="font-size: 18px;">{{ current_xp }} XP</b>
+        </div>
+
+        <div class="shop-grid">
+            {% for item in shop_items %}
+            <div class="shop-item">
+                <i class="{{ item.icon }}" style="font-size: 36px; color: {{ item.color }}; margin-bottom: 15px; display: block;"></i>
+                <div style="font-weight: 800; font-size: 15px; color: var(--text-main); margin-bottom: 5px; min-height: 40px; display: flex; align-items: center; justify-content: center;">{{ item.name }}</div>
+                <div style="color: #f59e0b; font-weight: 900; font-size: 16px; margin-bottom: 15px;">{{ item.price }} XP</div>
+                
+                {% if current_xp >= item.price %}
+                    <button class="btn-buy-modal" onclick="alert('Функция покупки скоро появится!')">Приобрести</button>
+                {% else %}
+                    <button class="btn-buy-modal" disabled>Не хватает XP</button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="allCoursesModal">
+    <div class="modal-window" style="width: 700px;">
+        <div class="modal-header" style="margin-bottom: 20px;">
+            <h3 class="modal-title"><i class="fa-solid fa-list" style="color: #10b981;"></i> Все мои курсы</h3>
+            <button class="btn-close" onclick="closeModal('allCoursesModal')">&times;</button>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for t_course in teacher_courses %}
+            <div class="t-course-card" style="margin-bottom: 0;">
+                <div>
+                    <div style="font-weight: 800; color: var(--text-main); font-size: 16px;">
+                        {{ t_course.title }}
+                    </div>
+                    <div class="t-course-stats">
+                        <span><i class="fa-solid fa-book" style="color: var(--primary-blue);"></i> Уроков: {{ t_course.total_lessons }}</span>
+                        <span><i class="fa-solid fa-users" style="color: #f59e0b;"></i> Студентов: {{ t_course.students_count }}</span>
+                        
+                        {% if t_course.status == 'published' %}
+                            <span style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> Опубликован</span>
+                        {% elif t_course.status == 'review' %}
+                            <span style="color: #3b82f6;"><i class="fa-solid fa-clock"></i> На проверке</span>
+                        {% else %}
+                            <span style="color: #ef4444;"><i class="fa-solid fa-pen"></i> Черновик</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <a href="{% url 'add_lesson' t_course.id %}" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 10px 15px; border-radius: 10px; font-weight: 700; text-decoration: none; transition: 0.3s; white-space: nowrap;">
+                    <i class="fa-solid fa-pen-to-square"></i> Управление
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Закрытие модалки по клику вне окна
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+</script>
+
+{% endblock %}

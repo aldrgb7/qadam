@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .pub-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    
+    .pub-card {
+        background: var(--bg-card); border-radius: 24px; padding: 40px; text-align: center;
+        border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; overflow: hidden;
+    }
+    
+    .pub-banner { position: absolute; top: 0; left: 0; width: 100%; height: 120px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); z-index: 0; }
+    
+    .pub-avatar {
+        width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid var(--bg-card);
+        position: relative; z-index: 1; margin: 40px auto 20px auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1); background: white;
+    }
+    
+    .pub-name { font-size: 32px; font-weight: 900; color: var(--text-main); margin-bottom: 5px; position: relative; z-index: 1; }
+    .pub-rank { display: inline-block; padding: 8px 15px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 12px; font-weight: 800; font-size: 14px; margin-bottom: 30px; }
+    
+    .pub-stats { display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; padding: 20px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+    .stat-item { text-align: center; }
+    .stat-val { font-size: 28px; font-weight: 900; color: var(--text-main); display: block; }
+    .stat-lbl { font-size: 13px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+
+    .pub-actions { display: flex; justify-content: center; gap: 15px; }
+    
+    .btn-friend {
+        padding: 14px 30px; border-radius: 12px; font-weight: 800; text-decoration: none; font-size: 15px; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+    }
+    .btn-add { background: var(--primary-blue); color: white; box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3); }
+    .btn-add:hover { background: #2563eb; transform: translateY(-2px); }
+    .btn-remove { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .btn-remove:hover { background: rgba(239, 68, 68, 0.2); transform: translateY(-2px); }
+    
+    .btn-msg { background: var(--bg-body); color: var(--text-main); border: 2px solid var(--border-color); }
+    .btn-msg:hover { border-color: var(--primary-blue); color: var(--primary-blue); transform: translateY(-2px); }
+</style>
+
+<div class="pub-container">
+    <div class="pub-card">
+        <div class="pub-banner"></div>
+        
+        {% if target_user.avatar %}
+            <img src="{{ target_user.avatar.url }}" class="pub-avatar">
+        {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ target_user.username }}&background=2563eb&color=fff&size=200" class="pub-avatar">
+        {% endif %}
+        
+        <h1 class="pub-name">{{ target_user.first_name|default:target_user.username }}</h1>
+        <div class="pub-rank">{{ rank_name }}</div>
+
+        <div class="pub-stats">
+            <div class="stat-item">
+                <span class="stat-val" style="color: #f59e0b;">{{ current_xp }}</span>
+                <span class="stat-lbl">Опыт (XP)</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" style="color: #10b981;">{% if target_user.is_teacher %}Учитель{% else %}Студент{% endif %}</span>
+                <span class="stat-lbl">Статус</span>
+            </div>
+        </div>
+
+        <div class="pub-actions">
+            {% if rel_status == 'friends' %}
+                <a href="{% url 'remove_friend' target_user.username %}" class="btn-friend btn-remove">
+                    <i class="fa-solid fa-user-minus"></i> Удалить из друзей
+                </a>
+                <a href="{% url 'friends_chat' target_user.username %}" class="btn-friend btn-msg">
+                    <i class="fa-solid fa-paper-plane"></i> Написать
+                </a>
+
+            {% elif rel_status == 'request_sent' %}
+                <a href="{% url 'remove_friend' target_user.username %}" class="btn-friend btn-msg" style="border-color: #f59e0b; color: #f59e0b;">
+                    <i class="fa-solid fa-clock"></i> Отменить заявку
+                </a>
+
+            {% elif rel_status == 'request_received' %}
+                <a href="{% url 'accept_friend_request' target_user.username %}" class="btn-friend btn-add">
+                    <i class="fa-solid fa-user-check"></i> Принять заявку
+                </a>
+                <a href="{% url 'remove_friend' target_user.username %}" class="btn-friend btn-remove">
+                    <i class="fa-solid fa-xmark"></i> Отклонить
+                </a>
+
+            {% else %}
+                <a href="{% url 'send_friend_request' target_user.username %}" class="btn-friend btn-add">
+                    <i class="fa-solid fa-user-plus"></i> Добавить в друзья
+                </a>
+                <a href="{% url 'friends_chat' target_user.username %}" class="btn-friend btn-msg">
+                    <i class="fa-solid fa-paper-plane"></i> Написать
+                </a>
+            {% endif %}
+        </div>
+{% endblock %}

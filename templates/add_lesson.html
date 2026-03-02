@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .builder-container {
+        max-width: 1200px; margin: 40px auto; padding: 0 20px;
+        display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; align-items: start;
+        color: var(--text-main); /* Базовый цвет текста для всего блока */
+    }
+    
+    .panel-box {
+        background: var(--bg-card); border-radius: 24px; padding: 35px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+        position: sticky; top: 20px;
+    }
+
+    .panel-box-right {
+        background: transparent; padding: 0; border: none; box-shadow: none;
+    }
+
+    .panel-title { font-size: 22px; font-weight: 800; color: var(--text-main); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+    
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* Адаптация полей ввода под тему */
+    .form-input, textarea, input[type="text"], input[type="number"], input[type="url"] { 
+        width: 100%; padding: 15px; border: 2px solid var(--border-color); 
+        background: var(--bg-body); color: var(--text-main); border-radius: 14px; 
+        font-size: 15px; transition: 0.3s; box-sizing: border-box; font-family: inherit;
+    }
+    .form-input:focus, textarea:focus, input:focus { 
+        border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); outline: none; background: var(--bg-card);
+    }
+    /* Адаптация подсказок в полях ввода */
+    .form-input::placeholder, textarea::placeholder, input::placeholder {
+        color: var(--text-muted); opacity: 0.7;
+    }
+    
+    /* Кнопки оставляем яркими (с белым текстом), они хорошо смотрятся на любой теме */
+    .btn-submit { width: 100%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 16px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;}
+    .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); }
+
+    .lesson-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+    .lesson-card:hover { border-color: var(--primary-blue); transform: translateX(5px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1); }
+    
+    /* Акцентные плашки */
+    .l-number { background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; flex-shrink: 0;}
+    
+    .l-info { flex-grow: 1; }
+    .l-title { font-weight: 800; color: var(--text-main); font-size: 16px; margin-bottom: 4px; }
+    .l-type { font-size: 12px; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+
+    /* Кнопки управления */
+    .l-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+    .action-btn { 
+        padding: 8px 14px; border-radius: 10px; font-weight: 700; text-decoration: none; 
+        font-size: 12px; text-transform: uppercase; text-align: center; transition: 0.2s; 
+        display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid transparent;
+    }
+    
+    /* Используем переменные темы для hover эффектов */
+    .btn-view { background: rgba(59, 130, 246, 0.05); color: var(--primary-blue); border-color: rgba(59, 130, 246, 0.2); }
+    .btn-view:hover { background: var(--primary-blue); color: #ffffff; }
+    
+    .btn-test { background: rgba(139, 92, 246, 0.05); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2); }
+    .btn-test:hover { background: #8b5cf6; color: #ffffff; transform: scale(1.02); }
+
+    .btn-finish { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; background: #10b981; color: #ffffff; padding: 18px; border-radius: 16px; font-weight: 800; text-decoration: none; margin-top: 25px; transition: 0.3s; font-size: 16px; }
+    .btn-finish:hover { background: #059669; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+
+    /* Дополнительные классы адаптации текста */
+    .text-title { color: var(--text-main); font-weight: 900; }
+    .text-desc { color: var(--text-muted); }
+    .text-link { color: var(--text-secondary); text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
+    .text-link:hover { color: var(--primary-blue); }
+
+    @media (max-width: 900px) { 
+        .builder-container { grid-template-columns: 1fr; } 
+        .panel-box { position: static; }
+    }
+</style>
+
+<div style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
+    <a href="{% url 'profile' %}" class="text-link">
+        <i class="fa-solid fa-arrow-left"></i> Вернуться в профиль
+    </a>
+    <h2 class="text-title" style="margin-top: 20px; font-size: 32px;">{{ course.title }}</h2>
+    <p class="text-desc" style="font-size: 16px;">Добавьте видео-уроки и тесты к вашему курсу.</p>
+</div>
+
+<div class="builder-container">
+    
+    <div class="panel-box">
+        <div class="panel-title"><i class="fa-solid fa-circle-plus" style="color: var(--primary-blue);"></i> Создать урок</div>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label class="form-label">№</label>
+                    {{ form.order }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Название урока</label>
+                    {{ form.title }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><i class="fa-brands fa-youtube" style="color: #ef4444; margin-right: 5px;"></i> Ссылка на видео (YouTube)</label>
+                {{ form.video_url }}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><i class="fa-solid fa-align-left" style="margin-right: 5px;"></i> Текст урока / Теория</label>
+                {{ form.description }}
+            </div>
+
+            <button type="submit" class="btn-submit">
+                Добавить урок в курс <i class="fa-solid fa-check"></i>
+            </button>
+        </form>
+    </div>
+
+    <div class="panel-box-right">
+        <div class="panel-title" style="background: var(--bg-card); padding: 20px 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+            <i class="fa-solid fa-list-check" style="color: #10b981;"></i> Программа курса 
+            <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 14px; margin-left: auto;">
+                {{ lessons.count }} уроков
+            </span>
+        </div>
+        
+        {% if lessons %}
+            {% for lesson in lessons %}
+            <div class="lesson-card">
+                <div class="l-number">{{ lesson.order }}</div>
+                
+                <div class="l-info">
+                    <div class="l-title">{{ lesson.title }}</div>
+                    <div class="l-type">
+                        {% if lesson.video_url %}
+                            <i class="fa-solid fa-circle-play" style="color: #ef4444;"></i> Видеоурок 
+                        {% else %}
+                            <i class="fa-solid fa-file-lines" style="color: var(--text-muted);"></i> Текстовый урок
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="l-actions">
+                    <a href="{% url 'lesson_detail' course.id lesson.id %}" target="_blank" class="action-btn btn-view" title="Посмотреть урок глазами студента">
+                        <i class="fa-solid fa-eye"></i> Обзор
+                    </a>
+                    
+                    <a href="{% url 'lesson_builder' lesson.id %}" class="action-btn btn-test" title="Добавить вопросы и ответы к уроку">
+                        <i class="fa-solid fa-brain"></i> Тесты
+                    </a>
+                </div>
+
+            </div>
+            {% endfor %}
+            
+            <a href="{% url 'profile' %}" class="btn-finish">
+                Завершить редактирование <i class="fa-solid fa-check-double"></i>
+            </a>
+        {% else %}
+            <div style="text-align: center; padding: 60px 20px; background: var(--bg-card); border: 2px dashed var(--border-color); border-radius: 20px;">
+                <i class="fa-solid fa-box-open" style="font-size: 48px; color: var(--text-muted); margin-bottom: 15px;"></i>
+                <h4 class="text-title" style="font-size: 20px; margin-bottom: 5px;">Программа пуста</h4>
+                <p class="text-desc" style="font-size: 15px; max-width: 300px; margin: 0 auto;">Добавьте свой первый урок, заполнив форму слева.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

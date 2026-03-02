@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .quiz-container { max-width: 850px; margin: 40px auto; padding: 0 20px; }
+    
+    .quiz-card { 
+        background: var(--bg-card); 
+        padding: 40px; 
+        border-radius: 24px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+        border: 1px solid var(--border-color); 
+    }
+    
+    .quiz-header { text-align: center; margin-bottom: 40px; }
+    .quiz-title { font-size: 32px; font-weight: 900; color: var(--text-main); margin-bottom: 15px; }
+    .quiz-desc { color: var(--text-secondary); font-size: 16px; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    
+    .question-card { 
+        background: var(--bg-body); 
+        border-radius: 16px; 
+        padding: 30px; 
+        margin-bottom: 25px; 
+        border: 1px solid var(--border-color); 
+    }
+    .question-text { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 20px; line-height: 1.4; }
+    
+    .answers-list { display: flex; flex-direction: column; gap: 12px; }
+    .answer-option { display: block; position: relative; cursor: pointer; margin: 0; }
+    .answer-option input { position: absolute; opacity: 0; cursor: pointer; }
+    
+    .answer-box {
+        display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+        background: var(--bg-card); border: 2px solid var(--border-color);
+        border-radius: 12px; transition: 0.2s; color: var(--text-secondary); font-weight: 600; font-size: 15px;
+    }
+    .answer-option:hover .answer-box { border-color: #93c5fd; background: rgba(219, 234, 254, 0.3); }
+    
+    .answer-option input:checked ~ .answer-box {
+        border-color: #3b82f6; background: rgba(59, 130, 246, 0.08); color: #2563eb;
+    }
+    
+    .radio-circle {
+        width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-color);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg-body);
+    }
+    .radio-circle::after {
+        content: ''; width: 10px; height: 10px; background: #3b82f6;
+        border-radius: 50%; opacity: 0; transition: 0.2s; transform: scale(0.5);
+    }
+    .answer-option input:checked ~ .answer-box .radio-circle { border-color: #3b82f6; }
+    .answer-option input:checked ~ .answer-box .radio-circle::after { opacity: 1; transform: scale(1); }
+
+    .btn-submit-gradient {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); 
+        color: white; border: none; padding: 18px 30px; 
+        font-size: 18px; font-weight: 800; border-radius: 14px; cursor: pointer; width: 100%; transition: 0.3s;
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3); margin-top: 10px;
+    }
+    .btn-submit-gradient:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(139, 92, 246, 0.4); }
+
+    .back-link {
+        display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); 
+        text-decoration: none; font-weight: 700; margin-bottom: 25px; transition: 0.2s;
+    }
+    .back-link:hover { color: var(--primary-blue); }
+
+    @media (max-width: 600px) {
+        .quiz-card { padding: 25px; border-radius: 20px; }
+        .question-card { padding: 20px; }
+        .quiz-title { font-size: 26px; }
+    }
+</style>
+
+<div class="quiz-container">
+    <a href="{% url 'lesson_detail' lesson.course.id lesson.id %}" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Вернуться к уроку
+    </a>
+
+    <div class="quiz-card">
+        <div class="quiz-header">
+            <i class="fa-solid fa-brain" style="font-size: 40px; color: #8b5cf6; margin-bottom: 15px;"></i>
+            <h1 class="quiz-title">{{ quiz.title }}</h1>
+            <p class="quiz-desc">{{ quiz.description }}</p>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% for question in quiz.questions.all %}
+                <div class="question-card">
+                    <div class="question-text">{{ forloop.counter }}. {{ question.text }}</div>
+                    
+                    <div class="answers-list">
+                        {% for choice in question.choices.all %}
+                            <label class="answer-option">
+                                <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                                <div class="answer-box">
+                                    <div class="radio-circle"></div>
+                                    <span>{{ choice.text }}</span>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-submit-gradient">
+                <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Отправить ответы
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

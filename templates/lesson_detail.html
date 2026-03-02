@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* --- ОСНОВНАЯ РАЗМЕТКА --- */
+    .lesson-page {
+        background: var(--bg-body);
+        color: var(--text-main);
+        min-height: calc(100vh - 70px);
+        display: flex; flex-direction: column;
+    }
+
+    .container-lesson {
+        max-width: 1600px; width: 100%; margin: 0 auto;
+        display: grid; grid-template-columns: 1fr 400px; flex-grow: 1;
+    }
+
+    /* --- ЛЕВАЯ ЧАСТЬ: КОНТЕНТ --- */
+    .content-area {
+        padding: 40px; overflow-y: auto; height: calc(100vh - 70px);
+        scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-body); 
+    }
+
+    /* 1. ВИДЕО */
+    .video-wrapper {
+        position: relative; padding-bottom: 56.25%; height: 0;
+        background: black; border-radius: 16px; overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px;
+    }
+    .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    /* 2. ОПИСАНИЕ УРОКА (ТЕОРИЯ) */
+    .lesson-meta { margin-bottom: 30px; padding-bottom: 30px; }
+    .lesson-title { font-size: 28px; font-weight: 800; color: var(--text-main); margin: 0 0 15px 0; }
+    .lesson-desc { font-size: 16px; line-height: 1.8; color: var(--text-main); background: var(--bg-card); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); }
+    .lesson-desc h3 { margin-top: 0; color: var(--primary-blue); font-size: 18px; margin-bottom: 15px; }
+
+    /* --- СТАТУС УРОКА И КНОПКИ --- */
+    .completion-panel {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 16px; padding: 25px; margin-bottom: 40px;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+    }
+    .completion-info { display: flex; align-items: center; gap: 15px; }
+    
+    .status-badge {
+        padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 14px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .status-badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+    .btn-complete {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white; border: none; padding: 14px 25px; border-radius: 12px;
+        font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.3s;
+        display: flex; align-items: center; gap: 10px; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+    }
+    .btn-complete:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+
+    /* НАВИГАЦИЯ МЕЖДУ УРОКАМИ */
+    .lesson-navigation { display: flex; gap: 15px; }
+    .btn-nav { padding: 12px 20px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-prev { background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-prev:hover { background: var(--border-color); }
+    .btn-next { background: var(--primary-blue); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
+    .btn-next:hover { background: #1d4ed8; transform: translateY(-2px); }
+
+    /* 3. БЛОК ПРАКТИКИ (ТЕСТ) */
+    .practice-section {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 16px; padding: 35px; margin-top: 30px; margin-bottom: 40px;
+    }
+    .section-header { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+    .section-header i { color: #8b5cf6; }
+
+    .question-card {
+        background: var(--bg-body); border-radius: 12px; padding: 25px;
+        margin-bottom: 20px; border: 1px solid var(--border-color);
+    }
+    .question-text { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 20px; }
+
+    .answers-list { display: flex; flex-direction: column; gap: 12px; }
+    .answer-option { display: block; position: relative; cursor: pointer; margin: 0; }
+    .answer-option input { position: absolute; opacity: 0; cursor: pointer; }
+    
+    .answer-box {
+        display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+        background: var(--bg-card); border: 2px solid var(--border-color);
+        border-radius: 12px; transition: 0.2s; color: var(--text-secondary); font-weight: 600; font-size: 15px;
+    }
+    .answer-option:hover .answer-box { border-color: #93c5fd; background: rgba(219, 234, 254, 0.3); }
+    
+    .answer-option input:checked ~ .answer-box { border-color: #3b82f6; background: rgba(59, 130, 246, 0.08); color: #2563eb; }
+    
+    .radio-circle {
+        width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-color);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg-body);
+    }
+    .radio-circle::after { content: ''; width: 10px; height: 10px; background: #3b82f6; border-radius: 50%; opacity: 0; transition: 0.2s; transform: scale(0.5); }
+    .answer-option input:checked ~ .answer-box .radio-circle { border-color: #3b82f6; }
+    .answer-option input:checked ~ .answer-box .radio-circle::after { opacity: 1; transform: scale(1); }
+
+    .btn-submit-quiz { background: #8b5cf6; color: white; border: none; padding: 15px 30px; width: 100%; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+    .btn-submit-quiz:hover { background: #7c3aed; transform: translateY(-2px); }
+
+    /* =========================================
+       🔥 СЕКЦИЯ КОММЕНТАРИЕВ 🔥
+       ========================================= */
+    .comments-section {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 16px; padding: 35px; margin-bottom: 40px;
+    }
+    .comments-header { font-size: 20px; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+    
+    .comment-form-box { display: flex; gap: 15px; margin-bottom: 30px; }
+    .comment-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--bg-body); }
+    .comment-input-wrapper { flex-grow: 1; }
+    .form-input { width: 100%; padding: 15px; border: 2px solid var(--border-color); background: var(--bg-body); color: var(--text-main); border-radius: 12px; font-family: 'Inter', sans-serif; resize: vertical; transition: 0.3s; }
+    .form-input:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); background: var(--bg-card); }
+    .btn-send-comment { background: var(--primary-blue); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-send-comment:hover { background: #2563eb; transform: translateY(-2px); }
+
+    .comment-list { display: flex; flex-direction: column; gap: 20px; }
+    .comment-item { display: flex; gap: 15px; background: var(--bg-body); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .comment-author { font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .comment-date { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .comment-text { font-size: 15px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* --- ПРАВАЯ ЧАСТЬ: ПЛЕЙЛИСТ --- */
+    .playlist-sidebar {
+        background: var(--bg-card); border-left: 1px solid var(--border-color);
+        height: calc(100vh - 70px); display: flex; flex-direction: column; position: sticky; top: 70px;
+    }
+    .playlist-header { padding: 25px; border-bottom: 1px solid var(--border-color); font-weight: 800; color: var(--text-main); font-size: 18px; }
+    .playlist-items { overflow-y: auto; flex-grow: 1; scrollbar-width: thin; }
+    
+    .playlist-item { display: flex; gap: 15px; padding: 18px 25px; text-decoration: none; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); transition: 0.2s; align-items: center; }
+    .playlist-item:hover { background: var(--bg-body); color: var(--primary-blue); }
+    .playlist-item.active { background: rgba(59, 130, 246, 0.05); border-left: 4px solid var(--primary-blue); color: var(--text-main); }
+    
+    .item-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; line-height: 1.4; }
+    .item-icon { color: var(--primary-blue); font-size: 14px; opacity: 0.8; }
+
+
+    @media (max-width: 1100px) {
+        .container-lesson { grid-template-columns: 1fr; }
+        .content-area { height: auto; overflow: visible; padding: 20px; }
+        .playlist-sidebar { height: auto; border-left: none; border-top: 1px solid var(--border-color); position: static; }
+        .playlist-items { max-height: 400px; }
+        .completion-panel { flex-direction: column; gap: 20px; align-items: stretch;}
+        .completion-info { justify-content: center; }
+        .lesson-navigation { flex-direction: column; }
+        .btn-nav, .btn-complete { width: 100%; justify-content: center; }
+        .comment-item { flex-direction: column; }
+    }
+</style>
+
+<div class="lesson-page">
+    <div class="container-lesson">
+        
+        <div class="content-area">
+            
+            <a href="{% url 'course_detail' course.id %}" style="color: var(--text-muted); text-decoration: none; font-weight: 700; margin-bottom: 25px; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;" onmouseover="this.style.color='var(--primary-blue)'" onmouseout="this.style.color='var(--text-muted)'">
+                <i class="fa-solid fa-arrow-left"></i> Назад к курсу
+            </a>
+
+            <div class="video-wrapper">
+                {% if lesson.get_video_id %}
+                <iframe src="https://www.youtube.com/embed/{{ lesson.get_video_id }}?rel=0" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                {% else %}
+                    <div style="display:flex; flex-direction: column; align-items:center; justify-content:center; height:100%; color:#555; background: #111;">
+                        <i class="fa-solid fa-book-open" style="font-size: 48px; margin-bottom: 15px; color: var(--primary-blue);"></i>
+                        <p style="font-weight: 700; color: white;">Теоретический урок</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="lesson-meta">
+                <h1 class="lesson-title">{{ lesson.order }}. {{ lesson.title }}</h1>
+                {% if lesson.description %}
+                    <div class="lesson-desc">
+                        <h3><i class="fa-solid fa-align-left" style="margin-right: 8px;"></i> Теория и описание</h3>
+                        {{ lesson.description|linebreaksbr }}
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if questions %}
+            <div class="practice-section" id="quiz-block">
+                <div class="section-header">
+                    <i class="fa-solid fa-brain"></i> Проверка знаний
+                </div>
+                <form action="{% url 'take_quiz' lesson.id %}" method="POST">
+                    {% csrf_token %}
+                    {% for question in questions %}
+                    <div class="question-card">
+                        <div class="question-text">{{ forloop.counter }}. {{ question.text }}</div>
+                        <div class="answers-list">
+                            {% for choice in question.choices.all %}
+                            <label class="answer-option">
+                                <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                                <div class="answer-box">
+                                    <div class="radio-circle"></div>
+                                    <span>{{ choice.text }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn-submit-quiz">
+                        <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Отправить ответы (+{{ lesson.quiz.xp_reward }} XP)
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="completion-panel">
+                <div class="completion-info">
+                    {% if is_completed %}
+                        <div class="status-badge success"><i class="fa-solid fa-circle-check"></i> Урок пройден</div>
+                        <span style="color: var(--text-muted); font-size: 14px; font-weight: 600;">XP получено!</span>
+                    {% else %}
+                        <div class="status-badge pending"><i class="fa-solid fa-spinner fa-spin"></i> В процессе</div>
+                    {% endif %}
+                </div>
+
+                <div class="lesson-navigation">
+                    {% if prev_lesson %}
+                        <a href="{% url 'lesson_detail' course.id prev_lesson.id %}" class="btn-nav btn-prev">
+                            <i class="fa-solid fa-arrow-left"></i> Предыдущий
+                        </a>
+                    {% endif %}
+
+                    {% if not is_completed and not questions %}
+                        <form action="{% url 'complete_lesson' lesson.id %}" method="POST" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-complete">
+                                <i class="fa-solid fa-check-double"></i> Завершить (+20 XP)
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    {% if next_lesson %}
+                        <a href="{% url 'lesson_detail' course.id next_lesson.id %}" class="btn-nav btn-next">
+                            Следующий <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="comments-section" id="comments">
+                <div class="comments-header">
+                    <i class="fa-regular fa-comments" style="color: var(--primary-blue);"></i> Обсуждение урока ({{ comments.count }})
+                </div>
+
+                <div class="comment-form-box">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" class="comment-avatar" alt="Avatar">
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=2563eb&color=fff" class="comment-avatar">
+                    {% endif %}
+                    
+                    <div class="comment-input-wrapper">
+                        <form method="POST" action="{% url 'lesson_detail' course.id lesson.id %}#comments">
+                            {% csrf_token %}
+                            {{ comment_form.text }}
+                            <div style="text-align: right;">
+                                <button type="submit" class="btn-send-comment">
+                                    <i class="fa-solid fa-paper-plane"></i> Отправить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="comment-list">
+                    {% for comment in comments %}
+                        <div class="comment-item">
+                            {% if comment.user.avatar %}
+                                <img src="{{ comment.user.avatar.url }}" class="comment-avatar" alt="Avatar">
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ comment.user.username }}&background=64748b&color=fff" class="comment-avatar">
+                            {% endif %}
+                            
+                            <div>
+                                <div class="comment-author">
+                                    {{ comment.user.first_name|default:comment.user.username }}
+                                    
+                                    {% if comment.user == course.author %}
+                                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Автор</span>
+                                    {% endif %}
+                                    
+                                    <span class="comment-date">{{ comment.created_at|date:"d M, H:i" }}</span>
+                                </div>
+                                <div class="comment-text">
+                                    {{ comment.text|linebreaksbr }}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div style="text-align: center; padding: 30px; background: var(--bg-body); border-radius: 12px; border: 1px dashed var(--border-color);">
+                            <i class="fa-regular fa-comment-dots" style="font-size: 30px; color: var(--text-muted); margin-bottom: 10px; display: block;"></i>
+                            <p style="color: var(--text-secondary); margin: 0; font-weight: 600;">Пока нет комментариев. Задайте вопрос первым!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="playlist-sidebar">
+            <div class="playlist-header">
+                <i class="fa-solid fa-list" style="margin-right: 10px; color: var(--primary-blue);"></i> Уроки курса
+            </div>
+            <div class="playlist-items">
+                {% for item in course.lessons.all %}
+                    <a href="{% url 'lesson_detail' course.id item.pk %}" class="playlist-item {% if item.pk == lesson.pk %}active{% endif %}">
+                        <div style="width: 25px; color: {% if item.pk == lesson.pk %}var(--primary-blue){% else %}var(--text-muted){% endif %}; font-weight: 900; font-size: 14px;">
+                            {{ item.order|default:forloop.counter }}
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <div class="item-title">{{ item.title }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 5px; margin-top: 4px;">
+                                {% if item.video_url %}
+                                    <i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Видео
+                                {% else %}
+                                    <i class="fa-solid fa-file-lines"></i> Текст
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if item.pk == lesson.pk %}
+                            <i class="fa-solid fa-circle-play item-icon" style="font-size: 18px;"></i>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

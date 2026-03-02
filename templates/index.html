@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* =========================================
+       ГЛОБАЛЬНЫЕ УЛУЧШЕНИЯ НАВИГАЦИИ
+       ========================================= */
+    .nav a { position: relative; }
+    .nav a::after {
+        content: ''; position: absolute; width: 0; height: 3px; bottom: -5px; left: 0;
+        background-color: var(--primary-blue); transition: width 0.3s ease; border-radius: 2px;
+    }
+    .nav a:hover::after, .nav a.active::after { width: 100%; }
+    body.dark-mode .nav a::after { background-color: #60a5fa; }
+
+    /* =========================================
+       БАЗОВЫЕ СТИЛИ КОНТЕЙНЕРА (Расширен до 95%)
+       ========================================= */
+    .dashboard-container { max-width: 95%; margin: 0 auto; padding: 30px 20px; }
+    .dashboard-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 30px; }
+
+    .hover-glow-effect { transition: all 0.3s ease; border: 1px solid var(--border-color); }
+    .hover-glow-effect:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); border-color: var(--primary-blue); }
+    body.dark-mode .hover-glow-effect { border-color: rgba(59, 130, 246, 0.15); }
+    body.dark-mode .hover-glow-effect:hover { border-color: #3b82f6; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.20); }
+
+    /* =========================================
+       ЛЕВАЯ КОЛОНКА (MAIN) - Более компактная
+       ========================================= */
+    .welcome-banner {
+        background: linear-gradient(90deg, #2563eb, #3b82f6); color: white !important; 
+        padding: 30px 40px; border-radius: 20px; position: relative; overflow: hidden;
+        margin-bottom: 30px; box-shadow: 0 8px 25px rgba(37, 99, 235, 0.20);
+        display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; border: 1px solid transparent;
+    }
+    .welcome-banner:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3); }
+    
+    .wb-content h1 { margin: 0 0 5px 0; font-size: 26px; font-weight: 900; color: #ffffff !important; }
+    .wb-content p { margin: 0; font-size: 15px; opacity: 0.95; font-weight: 500; color: #ffffff !important; }
+    .wb-content strong { color: #ffffff !important; }
+    
+    .wb-actions { display: flex; align-items: center; gap: 20px; z-index: 2; }
+    .wb-gauge { font-size: 40px; opacity: 0.8; color: rgba(255,255,255,0.8) !important; }
+    
+    .btn-white {
+        background: white; color: #2563eb !important; padding: 10px 20px; border-radius: 10px; 
+        font-weight: 800; text-decoration: none; font-size: 14px; transition: 0.2s; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .btn-white:hover { background: #f8fafc; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-size: 18px; font-weight: 800; color: var(--text-main); }
+
+    .active-course-card {
+        background: var(--bg-card); border-radius: 20px; padding: 20px;
+        display: flex; gap: 25px; align-items: center; margin-bottom: 40px; position: relative;
+    }
+    body.dark-mode .active-course-card { background: linear-gradient(145deg, #1e293b, #151e2f); }
+    
+    .ac-cover {
+        width: 25%; height: 140px; border-radius: 14px; background: linear-gradient(135deg, #FF3E8D, #5D52FA);
+        display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-shrink: 0; background-size: cover; background-position: center;
+    }
+    .ac-logo { font-size: 60px; color: white; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2)); }
+    
+    .ac-info { flex-grow: 1; }
+    .ac-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .ac-title { font-size: 22px; font-weight: 800; margin: 0; color: var(--text-main); line-height: 1.2;}
+    .ac-icon { font-size: 20px; color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 8px; }
+    
+    .ac-tag { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; display: block; margin-bottom: 12px; }
+    .ac-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.4; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+    
+    .ac-progress-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+    .ac-bar-bg { width: 100%; height: 6px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+    body.dark-mode .ac-bar-bg { background: rgba(255,255,255,0.1); }
+    .ac-bar-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); width: 0%; border-radius: 4px; transition: width 1s; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);}
+    
+    .btn-blue-lg {
+        background: var(--primary-blue); color: white; padding: 12px 30px; border-radius: 10px; 
+        font-weight: 700; text-decoration: none; font-size: 14px; display: inline-block; transition: 0.2s; box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+    }
+    .btn-blue-lg:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(29, 78, 216, 0.4); }
+
+    .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; } /* Сделали 3 колонки для компактности */
+    .rec-card { background: var(--bg-card); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+    body.dark-mode .rec-card { background: linear-gradient(145deg, #1e293b, #151e2f); }
+
+    .rec-header { height: 110px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .bg-gradient-1 { background: linear-gradient(135deg, #059669, #34d399); }
+    .bg-gradient-2 { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+    .bg-gradient-3 { background: linear-gradient(135deg, #db2777, #f472b6); }
+
+    .rec-img-overlay { text-align: center; z-index: 2; color: white; }
+    .rec-img-overlay i { font-size: 35px; margin-bottom: 8px; display: block; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.1)); }
+    .rec-img-overlay span { font-weight: 800; font-size: 15px; text-shadow: 0 2px 3px rgba(0,0,0,0.1); }
+
+    .rec-body { padding: 15px 20px; flex-grow: 1; display: flex; flex-direction: column; }
+    .rec-title { font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.2;}
+    .rec-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 15px; font-weight: 600;}
+    
+    .btn-rec-small {
+        margin-top: auto; text-align: center; background: rgba(37, 99, 235, 0.1); color: var(--primary-blue);
+        padding: 8px; border-radius: 8px; font-weight: 800; font-size: 13px; text-decoration: none; transition: 0.2s; border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+    .btn-rec-small:hover { background: var(--primary-blue); color: white; }
+    body.dark-mode .btn-rec-small { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+    body.dark-mode .btn-rec-small:hover { background: #3b82f6; color: white; }
+
+    /* =========================================
+       ПРАВАЯ КОЛОНКА (SIDEBAR) - Более компактная
+       ========================================= */
+    .sidebar-block { background: var(--bg-card); border-radius: 20px; padding: 25px 20px; text-align: center; margin-bottom: 25px; }
+    body.dark-mode .sidebar-block { background: linear-gradient(145deg, #1e293b, #151e2f); }
+
+    .avatar-ring {
+        width: 90px; height: 90px; margin: 0 auto 15px auto; border-radius: 50%;
+        background: #3b82f6; display: flex; align-items: center; justify-content: center; padding: 3px; 
+    }
+    
+    .avatar-inner { width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .sb-username { font-size: 18px; font-weight: 900; color: var(--text-main); margin: 0 0 6px 0; }
+    .sb-status { 
+        background: linear-gradient(90deg, #a855f7, #d946ef); color: white; padding: 4px 12px; border-radius: 15px; font-size: 11px; font-weight: 800; 
+        text-transform: uppercase; display: inline-block; margin-bottom: 20px; box-shadow: 0 3px 8px rgba(168, 85, 247, 0.3);
+    }
+
+    .fire-badge {
+        color: #d97706; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;
+        margin-bottom: 20px; background: rgba(245, 158, 11, 0.1); padding: 8px; border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .sb-stats-row { display: flex; justify-content: space-around; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px; }
+    body.dark-mode .sb-stats-row { border-top-color: rgba(255,255,255,0.05); }
+    
+    .sb-stat-val { font-size: 20px; font-weight: 900; color: #f59e0b; display: block; }
+    .sb-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; }
+
+    /* Рейтинг */
+    .lb-title { text-align: left; font-weight: 900; color: var(--text-main); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 16px;}
+    
+    .lb-row {
+        display: flex; align-items: center; padding: 10px 8px; border-bottom: 1px solid rgba(0,0,0,0.05);
+        transition: all 0.3s ease; border-radius: 10px; border: 1px solid transparent; text-decoration: none;
+    }
+    body.dark-mode .lb-row { border-bottom-color: rgba(255,255,255,0.05); }
+    .lb-row:last-child { border-bottom-color: transparent; }
+    
+    .lb-row:hover { transform: translateX(4px); background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.3); }
+    body.dark-mode .lb-row:hover { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2); }
+    
+    .lb-pos { width: 25px; font-weight: 900; color: var(--text-muted); font-size: 14px; }
+    .lb-pic { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover; border: 2px solid var(--bg-card); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .lb-u { flex-grow: 1; text-align: left; font-weight: 800; font-size: 14px; color: var(--text-main); }
+    .lb-xp { font-weight: 900; color: #3b82f6; font-size: 13px; }
+    .lb-row.active { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    @media (max-width: 1000px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+        .sidebar-block { order: -1; } 
+        .active-course-card { flex-direction: column; text-align: center; }
+        .ac-cover { width: 100%; height: 160px; margin-bottom: 20px; }
+        .rec-grid { grid-template-columns: repeat(2, 1fr); }
+        .welcome-banner { flex-direction: column; text-align: center; gap: 20px; }
+        .wb-actions { width: 100%; justify-content: center; }
+        .dashboard-container { padding: 20px; max-width: 100%; }
+    }
+    @media (max-width: 600px) {
+        .rec-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    {% if user.is_authenticated %}
+        
+        <div class="dashboard-grid">
+            
+            <div class="main-column">
+                
+                <div class="welcome-banner">
+                    <div class="wb-content">
+                        <h1>Рады видеть, {{ user.first_name|default:user.username }}! 👋</h1>
+                        
+                        {% if active_courses %}
+                            <p>Продолжим <strong>"{{ active_courses.0.title }}"</strong>? У тебя отличный темп!</p>
+                        {% else %}
+                            <p>Давай выберем твой первый курс!</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="wb-actions">
+                        <i class="fa-solid fa-gauge-high wb-gauge"></i>
+                        {% if active_courses %}
+                            <a href="{% url 'course_detail' active_courses.0.id %}" class="btn-white">К уроку <i class="fa-solid fa-play"></i></a>
+                        {% else %}
+                             <a href="{% url 'course_list' %}" class="btn-white">Выбрать курс</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <i class="fa-solid fa-graduation-cap" style="color:#3b82f6"></i> Ваши курсы
+                </div>
+
+                {% if active_courses %}
+                    {% for course in active_courses %}
+                        <div class="active-course-card hover-glow-effect">
+                            <div class="ac-cover" 
+                                 style="{% if course.image %}background-image: url('{{ course.image.url }}');{% endif %}">
+                                {% if not course.image %}
+                                    <i class="{{ course.icon_class }} ac-logo"></i>
+                                {% endif %}
+                            </div>
+
+                            <div class="ac-info">
+                                <div class="ac-header">
+                                    <div>
+                                        <h3 class="ac-title">{{ course.title }}</h3>
+                                        <span class="ac-tag">{{ course.level }}</span>
+                                    </div>
+                                    <i class="fa-solid fa-book ac-icon"></i>
+                                </div>
+                                
+                                <p class="ac-desc">{{ course.description }}</p>
+                                
+                                <div class="ac-progress-row">
+                                    <span>Прогресс</span>
+                                    <span>{{ course.percent }}%</span> 
+                                </div>
+                                <div class="ac-bar-bg">
+                                    <div class="ac-bar-fill" style="width: {{ course.percent }}%;"></div>
+                                </div>
+
+                                <a href="{% url 'course_detail' course.id %}" class="btn-blue-lg">
+                                    Продолжить <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 30px; border: 2px dashed rgba(148, 163, 184, 0.3); border-radius: 20px; margin-bottom: 30px;">
+                        <p style="font-size: 16px; color: var(--text-muted); font-weight: 700;">Вы пока не записаны ни на один курс.</p>
+                        <a href="{% url 'course_list' %}" style="color: var(--primary-blue); font-weight: 800;">Перейти в каталог →</a>
+                    </div>
+                {% endif %}
+
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display: flex; align-items: center;">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:#8b5cf6"></i> Умные рекомендации
+                        <span style="font-size: 11px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 4px 8px; border-radius: 8px; margin-left: 10px; font-weight: 800;">AI-Powered</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
+                        На основе вашей активности <i class="fa-solid fa-clock-rotate-left" style="margin-left: 5px;"></i>
+                    </div>
+                </div>
+
+                <div class="rec-grid">
+                    {% for course in courses|slice:":3" %} 
+                        <div class="rec-card hover-glow-effect">
+                            <div class="rec-header {% if not course.image %}{% cycle 'bg-gradient-1' 'bg-gradient-2' 'bg-gradient-3' %}{% endif %}"
+                                 style="{% if course.image %}background-image: url('{{ course.image.url }}'); background-size: cover; background-position: center;{% endif %}">
+                                
+                                {% if not course.image %}
+                                    <div class="rec-img-overlay">
+                                        <i class="{{ course.icon_class }}"></i>
+                                        <span>{{ course.title|truncatechars:15 }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="rec-body">
+                                <h4 class="rec-title">{{ course.title|truncatechars:30 }}</h4>
+                                <span class="rec-meta">{{ course.level }} • Начни сейчас</span>
+                                
+                                <div class="quality-feedback" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Оцените подборку:</span>
+                                    <div style="display: flex; gap: 10px;" id="feedback-btns-{{ course.id }}">
+                                        <button onclick="rateRecommendation({{ course.id }}, 'like')" style="background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; transition: 0.2s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='var(--text-muted)'" title="Полезно">
+                                            <i class="fa-solid fa-thumbs-up"></i>
+                                        </button>
+                                        <button onclick="rateRecommendation({{ course.id }}, 'dislike')" style="background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; transition: 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--text-muted)'" title="Не подходит">
+                                            <i class="fa-solid fa-thumbs-down"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <a href="{% url 'course_detail' course.id %}" class="btn-rec-small" style="margin-top: 12px;">Посмотреть курс</a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 20px; border: 1px dashed var(--border-color); border-radius: 16px;">
+                            <p style="color: var(--text-muted); font-weight: 600; margin: 0;">Алгоритм собирает данные... Пройдите первый урок!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            <aside class="sidebar-column">
+                
+                <div class="sidebar-block hover-glow-effect">
+                    <div class="avatar-ring">
+                        <div class="avatar-inner">
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" class="avatar-img">
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random&color=fff" class="avatar-img">
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h3 class="sb-username">{{ user.username }}</h3>
+                    <span class="sb-status">{{ rank_name }} 🚀</span>
+                    
+                    <div class="fire-badge">
+                        <i class="fa-solid fa-fire"></i> Ударный режим: 1 день
+                    </div>
+
+                    <div class="sb-stats-row">
+                        <div>
+                            <span class="sb-stat-val">{{ user.xp }}</span>
+                            <span class="sb-stat-lbl">XP</span>
+                        </div>
+                        <div>
+                            <span class="sb-stat-val" style="color: #10b981;">{{ stats.completed_lessons|default:"0" }}</span>
+                            <span class="sb-stat-lbl">Уроков</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-block hover-glow-effect">
+                    <div class="lb-title">
+                        Лидеры <i class="fa-solid fa-trophy" style="color: #facc15;"></i>
+                    </div>
+                    
+                    {% if top_users %}
+                        {% for student in top_users %}
+                        <a href="{% url 'public_profile' student.username %}" class="lb-row {% if student == user %}active{% endif %}">
+                            <span class="lb-pos" style="color: {% if forloop.counter == 1 %}#facc15{% elif forloop.counter == 2 %}#94a3b8{% else %}#d97706{% endif %};">
+                                {{ forloop.counter }}
+                            </span>
+                            
+                            {% if student.avatar %}
+                                <img src="{{ student.avatar.url }}" class="lb-pic">
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ student.username }}&background=random" class="lb-pic">
+                            {% endif %}
+                            
+                            <span class="lb-u">{{ student.username }}</span>
+                            <span class="lb-xp">{{ student.xp }}</span>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <p style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Рейтинг пока пуст...</p>
+                    {% endif %}
+                    
+                    <a href="#" style="display: block; text-align: center; margin-top: 15px; font-size: 12px; color: var(--primary-blue); font-weight: 900; text-decoration: none; opacity: 0.6; cursor: default;" onclick="return false;">
+                        Весь рейтинг (Скоро)
+                    </a>
+                </div>
+
+            </aside>
+
+        </div>
+
+    {% else %}
+        
+        <div style="text-align: center; padding: 80px 20px; background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 15px 30px rgba(0,0,0,0.05);" class="hover-glow-effect">
+            <h1 style="font-weight: 900; font-size: 32px; color: var(--text-main);">Добро пожаловать в QADAM</h1>
+            <a href="{% url 'login' %}" class="btn-blue-lg" style="margin-top: 25px; font-size: 16px; padding: 12px 40px;">Войти на платформу</a>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+function rateRecommendation(courseId, action) {
+    const container = document.getElementById(`feedback-btns-${courseId}`);
+    
+    // Сразу показываем пользователю, что голос принят (красивая анимация)
+    container.innerHTML = `<span style="font-size:12px; font-weight:800; color:#10b981;"><i class="fa-solid fa-check-double"></i> Учтено</span>`;
+
+    // Отправляем данные в базу (ML метрика)
+    fetch(`/rate-rec/${courseId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `action=${action}`
+    })
+    .then(response => response.json())
+    .then(data => console.log('Метрика сохранена:', data))
+    .catch(error => console.error('Ошибка записи метрики:', error));
+}
+</script>
+
+{% endblock %}

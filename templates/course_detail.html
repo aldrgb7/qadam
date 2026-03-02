@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 🔥 ЭФФЕКТ СВЕЧЕНИЯ И ПАРЕНИЯ (ОБЩИЙ КЛАСС) 🔥 */
+    .hover-glow-effect {
+        transition: all 0.3s ease !important;
+        border: 1px solid var(--border-color);
+    }
+    .hover-glow-effect:hover {
+        transform: translateY(-7px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+        border-color: var(--primary-blue) !important;
+    }
+    
+    body.dark-mode .hover-glow-effect {
+        border-color: rgba(59, 130, 246, 0.15) !important;
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+        backdrop-filter: blur(10px);
+    }
+    body.dark-mode .hover-glow-effect:hover {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25) !important;
+    }
+
+    /* =========================================
+       СЕТКА И БАЗОВЫЕ КОНТЕЙНЕРЫ
+       ========================================= */
+    .course-page-wrapper {
+        max-width: 1200px; 
+        margin: 30px auto 60px auto; 
+        padding: 0 20px;
+    }
+
+    /* =========================================
+       ШАПКА КУРСА (HERO SECTION)
+       ========================================= */
+    .course-hero {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: white; 
+        padding: 50px 40px;
+        border-radius: 24px;
+        margin-bottom: 40px;
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.2);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .course-hero:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.4);
+    }
+
+    .course-hero::after {
+        content: ''; position: absolute; top: -50px; right: -50px;
+        width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;
+    }
+    .course-hero::before {
+        content: ''; position: absolute; bottom: -80px; right: 100px;
+        width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;
+    }
+
+    .btn-back-hero {
+        display: inline-flex; align-items: center; gap: 8px;
+        color: rgba(255,255,255,0.8); text-decoration: none;
+        font-weight: 600; font-size: 14px; margin-bottom: 25px;
+        transition: 0.2s; position: relative; z-index: 2;
+    }
+    .btn-back-hero:hover { color: white; transform: translateX(-5px); }
+
+    .hero-title { font-size: 38px; font-weight: 900; margin: 0 0 15px 0; line-height: 1.2; position: relative; z-index: 2; color: #ffffff !important; }
+    
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 25px; font-size: 15px; font-weight: 500; opacity: 0.9; position: relative; z-index: 2; color: #ffffff !important; }
+    .hero-meta-item { display: flex; align-items: center; gap: 8px; }
+
+    /* =========================================
+       ОСНОВНОЙ КОНТЕНТ (2 КОЛОНКИ)
+       ========================================= */
+    .course-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* ЛЕВАЯ ЧАСТЬ */
+    .content-section {
+        background: var(--bg-card);
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .section-title { font-size: 24px; font-weight: 800; color: var(--text-main); margin: 0 0 20px 0; }
+    
+    .course-desc-text { line-height: 1.7; color: var(--text-secondary); font-size: 16px; margin: 0; font-weight: 500; }
+    .course-desc-text p { margin-bottom: 15px; }
+
+    /* ПРАВАЯ ЧАСТЬ (САЙДБАР) */
+    .sticky-sidebar {
+        position: sticky;
+        top: 100px; 
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    /* КАРТОЧКА ДЕЙСТВИЯ */
+    .action-card {
+        background: var(--bg-card);
+        padding: 30px;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+    .action-price { font-size: 28px; font-weight: 900; color: var(--text-main); margin-bottom: 20px; }
+    .action-price span { font-size: 16px; color: var(--text-muted); font-weight: 600; text-decoration: line-through; margin-left: 10px; }
+
+    .btn-main-action {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800;
+        text-decoration: none; border: none; cursor: pointer; transition: 0.3s; box-sizing: border-box;
+    }
+    
+    .btn-enroll-green { background: #10b981; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+    .btn-enroll-green:hover { background: #059669; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+
+    .btn-continue-blue { background: #3b82f6; color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+    .btn-continue-blue:hover { background: #2563eb; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4); }
+
+    .btn-disabled-grey { background: var(--bg-body); color: var(--text-muted); cursor: not-allowed; border: 1px solid var(--border-color); }
+
+    /* СПИСОК УРОКОВ */
+    .syllabus-card {
+        background: var(--bg-card); border-radius: 20px; overflow: hidden;
+    }
+    
+    .syllabus-header {
+        background: var(--bg-body); padding: 18px 25px; border-bottom: 1px solid var(--border-color);
+        font-weight: 800; color: var(--text-main); font-size: 16px;
+    }
+    body.dark-mode .syllabus-header { background: rgba(0,0,0,0.2); border-bottom-color: rgba(255,255,255,0.05); }
+    
+    .lesson-item {
+        padding: 15px 25px; border-bottom: 1px solid var(--border-color);
+        display: flex; align-items: center; gap: 15px; text-decoration: none; transition: all 0.3s ease;
+    }
+    body.dark-mode .lesson-item { border-bottom-color: rgba(255,255,255,0.05); }
+    .lesson-item:last-child { border-bottom: none; }
+    
+    .lesson-item.clickable:hover { 
+        background: var(--bg-body); 
+        padding-left: 35px; 
+        border-left: 4px solid var(--primary-blue);
+    }
+    body.dark-mode .lesson-item.clickable:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-left-color: #3b82f6;
+    }
+
+    .lesson-item.locked { opacity: 0.6; cursor: not-allowed; background: var(--bg-body); }
+    body.dark-mode .lesson-item.locked { background: rgba(0,0,0,0.1); }
+    
+    .l-num { width: 28px; height: 28px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+    .l-info { flex-grow: 1; }
+    .l-title { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-main); }
+    .l-icon { font-size: 16px; }
+
+    /* =========================================
+       ОТЗЫВЫ
+       ========================================= */
+    .review-card { padding: 20px 0; border-bottom: 1px solid var(--border-color); transition: 0.3s; }
+    body.dark-mode .review-card { border-bottom-color: rgba(255,255,255,0.05); }
+    .review-card:last-child { border-bottom: none; padding-bottom: 0; }
+    
+    .r-head { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+    .r-author { font-weight: 800; color: var(--text-main); font-size: 15px; }
+    .r-date { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .r-stars { color: #f59e0b; font-size: 13px; margin-bottom: 10px; }
+    .r-text { color: var(--text-secondary); line-height: 1.6; font-size: 15px; margin: 0; font-weight: 500; }
+
+    .review-form-box { background: var(--bg-body); padding: 25px; border-radius: 16px; margin-bottom: 30px; border: 1px solid var(--border-color); }
+    body.dark-mode .review-form-box { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+    
+    .form-control, .form-select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; margin-top: 8px; background: var(--bg-card); color: var(--text-main); box-sizing: border-box; font-family: inherit; transition: 0.3s; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); outline: none; }
+    body.dark-mode .form-control, body.dark-mode .form-select { background: rgba(15, 23, 42, 0.8); border-color: rgba(255,255,255,0.1); }
+
+    /* =========================================
+       🔥 АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ И МОБИЛОК 🔥
+       ========================================= */
+    @media (max-width: 900px) {
+        .course-layout { grid-template-columns: 1fr; }
+        .sticky-sidebar { position: relative; top: 0; order: -1; } /* Сайдбар прыгает наверх */
+        .course-hero { padding: 30px 20px; }
+        .hero-title { font-size: 28px; }
+    }
+
+    @media (max-width: 600px) {
+        /* Убираем лишние отступы у главного контейнера */
+        .course-page-wrapper { padding: 0 10px; margin-top: 15px; }
+        
+        /* Шапка курса (Hero) */
+        .course-hero { padding: 25px 20px; border-radius: 16px; margin-bottom: 25px; }
+        .hero-title { font-size: 24px; }
+        .hero-meta { flex-direction: column; gap: 10px; } /* Метаданные (уроки, автор) в колонку */
+        
+        /* Блоки с контентом */
+        .content-section { padding: 20px; border-radius: 16px; }
+        .section-title { font-size: 20px; }
+        
+        /* Отзывы */
+        .review-form-box { padding: 15px; }
+        .btn-main-action { width: 100% !important; box-sizing: border-box; } /* Кнопки на 100% ширины */
+        
+        /* Список уроков */
+        .lesson-item { padding: 15px; }
+        .l-title { font-size: 13px; }
+    }
+</style>
+
+<div class="course-page-wrapper">
+    
+    <div class="course-hero">
+        <a href="{% url 'course_list' %}" class="btn-back-hero"><i class="fa-solid fa-arrow-left"></i> К каталогу</a>
+        
+        <h1 class="hero-title">{{ course.title }}</h1>
+        
+        <div class="hero-meta">
+            <div class="hero-meta-item"><i class="fa-solid fa-layer-group"></i> Уровень: {{ course.level }}</div>
+            <div class="hero-meta-item"><i class="fa-solid fa-list-ol"></i> {{ lessons.count }} уроков</div>
+            <div class="hero-meta-item" style="color: #fcd34d;"><i class="fa-solid fa-star"></i> {{ avg_rating }} / 5</div>
+            <div class="hero-meta-item"><i class="fa-solid fa-user-tie"></i> Автор: {{ course.author.username|default:"QADAM Academy" }}</div>
+        </div>
+    </div>
+
+    <div class="course-layout">
+        
+        <div class="main-column">
+            
+            <div class="content-section hover-glow-effect">
+                <h2 class="section-title">О курсе</h2>
+                <div class="course-desc-text">
+                    {{ course.description|linebreaks }}
+                </div>
+            </div>
+
+            <div class="content-section hover-glow-effect">
+                <h2 class="section-title">Отзывы ({{ reviews.count }})</h2>
+
+                {% if user.is_authenticated %}
+                    {% if not user_left_review %}
+                        <div class="review-form-box">
+                            <h4 style="margin: 0 0 15px 0; color: var(--text-main);">Оставить свой отзыв</h4>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div style="margin-bottom: 15px;">
+                                    <label style="font-size: 14px; font-weight: 700; color: var(--text-secondary);">Оценка</label>
+                                    {{ review_form.rating }}
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="font-size: 14px; font-weight: 700; color: var(--text-secondary);">Комментарий</label>
+                                    {{ review_form.comment }}
+                                </div>
+                                <button type="submit" class="btn-main-action btn-continue-blue" style="padding: 12px; width: auto; display: inline-block;">Опубликовать</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 15px 20px; border-radius: 12px; font-weight: 600; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <i class="fa-solid fa-circle-check" style="font-size: 20px;"></i> Вы уже оценили этот курс. Спасибо!
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <div class="reviews-container">
+                    {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="r-head">
+                                <span class="r-author">{{ review.user.username }}</span>
+                                <span class="r-date">{{ review.created_at|date:"d M Y" }}</span>
+                            </div>
+                            <div class="r-stars">
+                                {% with ''|center:review.rating as range %}
+                                    {% for _ in range %}★{% endfor %}
+                                {% endwith %}
+                            </div>
+                            <p class="r-text">{{ review.comment }}</p>
+                        </div>
+                    {% empty %}
+                        <div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 500;">
+                            Отзывов пока нет. {% if user.is_authenticated %}Станьте первым!{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="sticky-sidebar">
+            
+            <div class="action-card hover-glow-effect">
+                <div class="action-price">Бесплатно <span></span></div>
+                
+                {% if user.is_authenticated %}
+                    {% if lessons.first %}
+                        {% if is_enrolled %}
+                            <a href="{% url 'lesson_detail' course.id lessons.first.id %}" class="btn-main-action btn-continue-blue">
+                                Продолжить <i class="fa-solid fa-circle-play"></i>
+                            </a>
+                            <p style="margin: 15px 0 0 0; font-size: 13px; color: #10b981; font-weight: 700;"><i class="fa-solid fa-check"></i> Вы уже участник</p>
+                        {% else %}
+                            <form action="{% url 'enroll_course' course.id %}" method="POST" style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-main-action btn-enroll-green">
+                                    Записаться на курс <i class="fa-solid fa-bolt"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <button class="btn-main-action btn-disabled-grey" disabled>Уроков пока нет</button>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn-main-action btn-enroll-green">
+                        Зарегистрироваться <i class="fa-solid fa-user-plus"></i>
+                    </a>
+                    <p style="margin: 15px 0 0 0; font-size: 12px; color: var(--text-muted);">Для записи необходим аккаунт</p>
+                {% endif %}
+            </div>
+
+            <div class="syllabus-card hover-glow-effect">
+                <div class="syllabus-header">Программа курса ({{ lessons.count }})</div>
+                
+                {% for lesson in lessons %}
+                    {% if user.is_authenticated and is_enrolled %}
+                        <a href="{% url 'lesson_detail' course.id lesson.id %}" class="lesson-item clickable">
+                            <div class="l-num">{{ forloop.counter }}</div>
+                            <div class="l-info">
+                                <h4 class="l-title">{{ lesson.title }}</h4>
+                            </div>
+                            <i class="fa-regular fa-circle-play l-icon" style="color: #3b82f6;"></i>
+                        </a>
+                    {% else %}
+                        <div class="lesson-item locked">
+                            <div class="l-num" style="background: var(--border-color); color: var(--text-muted);">{{ forloop.counter }}</div>
+                            <div class="l-info">
+                                <h4 class="l-title" style="color: var(--text-muted);">{{ lesson.title }}</h4>
+                            </div>
+                            <i class="fa-solid fa-lock l-icon" style="color: var(--text-muted);"></i>
+                        </div>
+                    {% endif %}
+                {% empty %}
+                    <div style="padding: 20px; text-align: center; font-size: 14px; color: var(--text-muted);">
+                        Преподаватель скоро добавит уроки.
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .blog-container { max-width: 1200px; margin: 40px auto 80px auto; padding: 0 20px; }
+
+    /* ШАПКА БЛОГА */
+    .blog-header {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: white; padding: 50px 40px; border-radius: 24px;
+        text-align: center; position: relative; overflow: hidden;
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.2); margin-bottom: 40px;
+    }
+    .blog-header::after { content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; blur(10px); }
+    .bh-title { font-size: 40px; font-weight: 900; margin: 0 0 10px 0; position: relative; z-index: 2; color: #ffffff !important; }
+    .bh-desc { font-size: 16px; opacity: 0.9; position: relative; z-index: 2; color: #ffffff !important; }
+    /* СЕТКА СТАТЕЙ */
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+    }
+
+    /* КАРТОЧКА СТАТЬИ */
+    .post-card {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 20px; overflow: hidden; transition: all 0.3s ease;
+        display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+    }
+    .post-card:hover { transform: translateY(-7px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: var(--primary-blue); }
+
+    .pc-cover {
+        height: 200px; background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        background-size: cover; background-position: center;
+        position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .pc-category {
+        position: absolute; top: 15px; left: 15px;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+        color: white; padding: 5px 12px; border-radius: 8px;
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+
+    .pc-body { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; }
+    .pc-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 12px; }
+    .pc-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0 0 10px 0; line-height: 1.3; }
+    .pc-excerpt { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px; flex-grow: 1; }
+    
+    .btn-read {
+        background: var(--bg-body); color: var(--primary-blue); text-decoration: none;
+        padding: 10px; border-radius: 10px; font-weight: 700; font-size: 13px;
+        text-align: center; transition: 0.2s; border: 1px solid var(--border-color);
+    }
+    .btn-read:hover { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+
+
+    /* 🔥 ТЕМНАЯ ТЕМА 🔥 */
+    body.dark-mode .post-card {
+        background: linear-gradient(145deg, #1e293b, #151e2f);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    body.dark-mode .post-card:hover { border-color: #3b82f6; box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25); }
+    body.dark-mode .btn-read { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); }
+    body.dark-mode .btn-read:hover { background: #3b82f6; color: white; }
+
+    @media (max-width: 768px) {
+        .blog-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="blog-container">
+    
+    <div class="blog-header">
+        <h1 class="bh-title">Блог QADAM</h1>
+        <p class="bh-desc">Полезные статьи, новости платформы и советы для учебы</p>
+    </div>
+
+    <div class="blog-grid">
+        {% for post in posts %}
+            <div class="post-card">
+                
+                <div class="pc-cover" style="{% if post.image %}background-image: url('{{ post.image.url }}');{% endif %}">
+                    <span class="pc-category">{{ post.category }}</span>
+                    {% if not post.image %}
+                        <i class="fa-solid fa-newspaper" style="font-size: 50px; color: rgba(255,255,255,0.5);"></i>
+                    {% endif %}
+                </div>
+
+                <div class="pc-body">
+                    <div class="pc-meta">
+                        <span><i class="fa-regular fa-calendar"></i> {{ post.created_at|date:"d M Y" }}</span>
+                        <span><i class="fa-regular fa-eye"></i> {{ post.views }}</span>
+                    </div>
+                    
+                    <h3 class="pc-title">{{ post.title }}</h3>
+                    <p class="pc-excerpt">{{ post.content|truncatechars:100 }}</p>
+                    
+                    <a href="{% url 'blog_detail' post.slug %}" class="btn-read">Читать статью <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+            </div>
+        {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px; background: var(--bg-card); border-radius: 20px; border: 1px dashed var(--border-color);">
+                <i class="fa-solid fa-pen-nib" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
+                <h3 style="color: var(--text-main);">Статей пока нет</h3>
+                <p style="color: var(--text-secondary);">Автор готовит первый крутой материал. Загляните позже!</p>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

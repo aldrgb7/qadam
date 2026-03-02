@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QADAM - Образовательная платформа</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. ПЕРЕМЕННЫЕ ЦВЕТОВ (СВЕТЛАЯ ТЕМА) --- */
+        :root {
+            --primary-blue: #0056b3;
+            --primary-hover: #004494;
+            --bg-body: #f4f8fb;
+            --bg-card: #ffffff;
+            --bg-header: rgba(255, 255, 255, 0.95);
+            --text-main: #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted: #8898aa;
+            --border-color: #dae1e7;
+            --shadow-card: rgba(0,0,0,0.02);
+            --bg-icon-color: #0096c7;
+            --bg-icon-opacity: 0.1;
+            --border-radius: 16px;
+        }
+
+        /* --- 2. ТЕМНАЯ ТЕМА (DARK MODE) --- */
+        body.dark-mode {
+            --bg-body: #0f172a; 
+            --bg-card: #1e293b; 
+            --bg-header: rgba(30, 41, 59, 0.95);
+            --text-main: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --shadow-card: rgba(0,0,0,0.2);
+            --bg-icon-color: #38bdf8;
+            --bg-icon-opacity: 0.05;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* --- ФОНОВЫЕ ЭЛЕМЕНТЫ --- */
+        .bg-decoration {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none; overflow: hidden;
+        }
+
+        .bg-icon {
+            position: absolute; color: var(--bg-icon-color);
+            opacity: var(--bg-icon-opacity); font-size: 80px;
+            transform: rotate(-15deg); transition: color 0.3s, opacity 0.3s;
+        }
+
+        .icon-laptop { top: 5%; left: 2%; font-size: 130px; }
+        .icon-book { top: 10%; right: 5%; font-size: 110px; transform: rotate(15deg); }
+        .icon-pencil { bottom: 15%; left: 8%; font-size: 100px; transform: rotate(45deg); }
+        .icon-calc { top: 40%; left: 30%; font-size: 90px; }
+        .icon-globe { bottom: 5%; right: 2%; font-size: 120px; }
+        .icon-atom { top: 60%; right: 15%; font-size: 100px; }
+        .icon-grad { bottom: 50%; left: -3%; font-size: 160px; }
+        .icon-ruler { top: 5%; left: 45%; font-size: 90px; transform: rotate(10deg); }
+        .icon-code { top: 25%; right: 35%; font-size: 110px; }
+        .icon-microscope { bottom: 30%; left: 25%; font-size: 100px; transform: rotate(-20deg); }
+        .icon-lightbulb { top: 50%; right: 5%; font-size: 90px; }
+        .icon-keyboard { bottom: 5%; left: 50%; font-size: 120px; transform: rotate(5deg); }
+        .icon-clock { top: 30%; left: 10%; font-size: 80px; }
+
+        /* --- ШАПКА --- */
+        .header {
+            background: var(--bg-header);
+            backdrop-filter: blur(8px);
+            padding: 15px 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 15px var(--shadow-card);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        /* --- СТИЛИ ДЛЯ ЛОГОТИПА QADAM --- */
+        .logo { 
+            font-family: 'Arial Black', 'Nunito', sans-serif; /* Делаем шрифт максимально толстым и рубленым */
+            font-size: 30px; 
+            font-weight: 900; 
+            color: var(--text-main); 
+            letter-spacing: -1px; /* Сдвигаем буквы плотнее, как на картинке */
+            display: inline-flex;
+            align-items: baseline;
+        }
+        .q-blue { 
+            color: #0066cc; /* Тот самый яркий синий цвет с картинки */
+            font-size: 36px; /* Делаем букву Q чуть больше остальных */
+            margin-right: 1px;
+        }
+        body.dark-mode .q-blue {
+            color: #3b82f6; /* В темной теме синий будет светиться ярче */
+        }
+        
+        /* НАВИГАЦИЯ ДЕСКТОП */
+        .nav { display: flex; align-items: center; }
+        .nav a { 
+            text-decoration: none; color: #475569; margin: 0 15px; 
+            font-weight: 800; font-size: 16px; letter-spacing: 0.5px;
+            transition: color 0.3s ease; 
+        }
+        .nav a:hover, .nav a.active { color: #2563eb; }
+        body.dark-mode .nav a { color: #cbd5e1; }
+        body.dark-mode .nav a:hover, body.dark-mode .nav a.active { color: #60a5fa; }
+
+        .profile-section { display: flex; align-items: center; gap: 15px; }
+        .xp-badge { background: #eef4ff; color: var(--primary-blue); padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 14px; }
+        body.dark-mode .xp-badge { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        
+        .theme-toggle {
+            background: none; border: none; cursor: pointer;
+            font-size: 20px; color: var(--text-secondary);
+            padding: 5px; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .theme-toggle:hover { color: #2563eb; transform: scale(1.1); }
+        body.dark-mode .theme-toggle:hover { color: #60a5fa; }
+
+        /* 🔥 СТИЛИ УВЕДОМЛЕНИЙ (КОЛОКОЛЬЧИК) 🔥 */
+        .notification-wrapper { position: relative; display: flex; align-items: center; }
+        .bell-btn { background: none; border: none; font-size: 20px; color: var(--text-secondary); cursor: pointer; transition: 0.2s; position: relative; padding: 5px; }
+        .bell-btn:hover { color: #2563eb; transform: scale(1.1); }
+        body.dark-mode .bell-btn:hover { color: #60a5fa; }
+        
+        .notification-badge { 
+            position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; 
+            font-size: 10px; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-header);
+        }
+        
+        .notification-dropdown { 
+            position: absolute; top: 150%; right: -50px; width: 320px; background: var(--bg-card); 
+            border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--border-color); 
+            opacity: 0; pointer-events: none; transform: translateY(10px); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            z-index: 1000; overflow: hidden;
+        }
+        .notification-dropdown.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .notif-header { padding: 15px 20px; font-weight: 900; border-bottom: 1px solid var(--border-color); font-size: 15px; color: var(--text-main); }
+        .notif-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.2s; cursor: pointer; text-decoration: none; }
+        body.dark-mode .notif-item { border-bottom-color: rgba(255,255,255,0.05); }
+        .notif-item:hover { background: rgba(59, 130, 246, 0.05); }
+        .notif-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; margin-right: 15px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;}
+        .notif-text { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--text-secondary); }
+        .notif-text b { color: var(--text-main); font-weight: 800; }
+        .notif-time { font-size: 11px; color: var(--primary-blue); font-weight: 800; margin-top: 4px; }
+        
+        .notif-footer { display: block; text-align: center; padding: 12px; background: var(--bg-body); color: var(--primary-blue); font-weight: 800; font-size: 13px; text-decoration: none; transition: 0.2s; }
+        .notif-footer:hover { background: var(--primary-blue); color: white; }
+
+        .avatar-link {
+            width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
+            background-color: #eee; transition: transform 0.2s; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; border: 2px solid transparent;
+        }
+        .avatar-link:hover { transform: scale(1.1); border-color: #2563eb; }
+        body.dark-mode .avatar-link:hover { border-color: #60a5fa; }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-icon { font-size: 20px; color: #555; }
+
+        .btn-logout { margin-left: 10px; color: #ef4444; font-size: 18px; transition: 0.2s; }
+        .btn-logout:hover { color: #dc2626; }
+
+        .btn-primary { 
+            background: var(--primary-blue); color: white; border: none; 
+            padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; text-align: center; display: block; font-weight: 700;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        /* Общие стили для других страниц */
+        .card, .widget, .profile-card, .content-box, .course-progress-list, .courses-box, .shop-card, .achievement-card {
+            background: var(--bg-card) !important; color: var(--text-main) !important; border-color: var(--border-color) !important;
+        }
+        h1, h2, h3, h4, h5, h6 { color: var(--text-main); font-weight: 800; }
+        p, span, div { color: inherit; } 
+
+        .footer {
+            text-align: center; padding: 40px; color: var(--text-muted); margin-top: auto;
+            border-top: 1px solid var(--border-color); background: var(--bg-header); font-weight: 600;
+        }
+
+        /* --- 🔥 МОБИЛЬНАЯ АДАПТАЦИЯ ШАПКИ 🔥 --- */
+        .burger-btn { display: none; background: none; border: none; font-size: 24px; color: var(--text-main); cursor: pointer; margin-left: 10px; }
+        .mobile-auth-only { display: none; }
+
+        @media (max-width: 850px) {
+            .header { padding: 15px 20px; } 
+            .burger-btn { display: block; } 
+            
+            .nav {
+                position: absolute; top: 100%; left: 0; width: 100%;
+                background: var(--bg-header); backdrop-filter: blur(10px);
+                flex-direction: column; align-items: center;
+                padding: 0; max-height: 0; overflow: hidden;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+                border-top: 1px solid transparent;
+            }
+            .nav.active { max-height: 400px; padding: 20px 0; border-top-color: var(--border-color); }
+            .nav a { margin: 12px 0; font-size: 18px; }
+            
+            .hide-on-mobile { display: none !important; } 
+            .desktop-auth-only { display: none; } 
+            
+            .mobile-auth-only {
+                display: flex; flex-direction: column; align-items: center; width: 100%;
+                border-top: 1px solid var(--border-color); margin-top: 10px; padding-top: 20px;
+            }
+            .mobile-auth-only a { margin: 5px 0; }
+            .btn-reg-mobile { background: #2563eb; color: white !important; padding: 10px 30px; border-radius: 20px; font-weight: 800; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-decoration">
+        <i class="fa-solid fa-laptop bg-icon icon-laptop"></i>
+        <i class="fa-solid fa-book-open bg-icon icon-book"></i>
+        <i class="fa-solid fa-pencil bg-icon icon-pencil"></i>
+        <i class="fa-solid fa-calculator bg-icon icon-calc"></i>
+        <i class="fa-solid fa-earth-americas bg-icon icon-globe"></i>
+        <i class="fa-solid fa-atom bg-icon icon-atom"></i>
+        <i class="fa-solid fa-graduation-cap bg-icon icon-grad"></i>
+        <i class="fa-solid fa-ruler-combined bg-icon icon-ruler"></i> 
+        <i class="fa-solid fa-code bg-icon icon-code"></i> 
+        <i class="fa-solid fa-microscope bg-icon icon-microscope"></i> 
+        <i class="fa-regular fa-lightbulb bg-icon icon-lightbulb"></i> 
+        <i class="fa-regular fa-keyboard bg-icon icon-keyboard"></i> 
+        <i class="fa-regular fa-clock bg-icon icon-clock"></i> 
+    </div>
+
+    <header class="header">
+        <a href="/" class="logo"><span class="q-blue">Q</span>ADAM</a>
+        
+        <nav class="nav" id="mobileNav">
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}">Главная</a>
+            <a href="{% url 'course_list' %}" class="{% if '/courses/' in request.path %}active{% endif %}">Курсы</a>
+            <a href="{% url 'blog' %}" class="{% if '/blog/' in request.path %}active{% endif %}">Блог</a>
+            <a href="{% url 'about' %}" class="{% if '/about/' in request.path %}active{% endif %}">О нас</a>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'friends_page' %}" class="{% if '/friends/' in request.path %}active{% endif %}">Друзья</a>
+            {% endif %}
+            
+            {% if not user.is_authenticated %}
+            <div class="mobile-auth-only">
+                <a href="{% url 'login' %}" style="color: var(--text-secondary); font-weight: 700;">Войти</a>
+                <a href="{% url 'register' %}" class="btn-reg-mobile">Регистрация</a>
+            </div>
+            {% endif %}
+        </nav>
+        
+        <div class="profile-section">
+            {% if user.is_authenticated %}
+                
+            <div class="notification-wrapper">
+                <button class="bell-btn" id="bellBtn">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if unread_count > 0 %}
+                        <span class="notification-badge">{{ unread_count }}</span>
+                    {% endif %}
+                </button>
+                
+                <div class="notification-dropdown" id="notifDropdown">
+                    <div class="notif-header">
+                        <i class="fa-solid fa-bell" style="margin-right: 5px; color: var(--primary-blue);"></i> Уведомления
+                    </div>
+                    
+                    {% for req in pending_requests %}
+                        <div class="notif-item" style="cursor: default; flex-direction: column; align-items: flex-start;">
+                            <div style="display: flex; align-items: center; width: 100%;">
+                                <div class="notif-avatar">
+                                    {% if req.from_user.avatar %}
+                                        <img src="{{ req.from_user.avatar.url }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                    {% else %}
+                                        <img src="https://ui-avatars.com/api/?name={{ req.from_user.username }}&background=2563eb&color=fff" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                    {% endif %}
+                                </div>
+                                <div style="flex-grow: 1;">
+                                    <div class="notif-text"><b>{{ req.from_user.first_name|default:req.from_user.username }}</b> хочет добавить вас в друзья</div>
+                                    <div class="notif-time">{{ req.created_at|timesince }} назад</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+                                <a href="{% url 'accept_friend_request' req.from_user.username %}" style="flex: 1; background: #10b981; color: white; text-align: center; padding: 6px; border-radius: 8px; font-size: 12px; font-weight: 800; text-decoration: none;">Принять</a>
+                                <a href="{% url 'remove_friend' req.from_user.username %}" style="flex: 1; background: var(--bg-body); color: var(--text-secondary); text-align: center; padding: 6px; border-radius: 8px; font-size: 12px; font-weight: 800; text-decoration: none;">Отклонить</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    {% for msg in unread_messages %}
+                        <a href="{% url 'friends_chat' msg.sender.username %}" class="notif-item">
+                            <div class="notif-avatar">
+                                {% if msg.sender.avatar %}
+                                    <img src="{{ msg.sender.avatar.url }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                    <img src="https://ui-avatars.com/api/?name={{ msg.sender.username }}&background=8b5cf6&color=fff" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="notif-text"><b>{{ msg.sender.first_name|default:msg.sender.username }}</b>: {{ msg.text|truncatechars:20 }}</div>
+                                <div class="notif-time">{{ msg.created_at|timesince }} назад</div>
+                            </div>
+                        </a>
+                    {% endfor %}
+
+                    {% if not pending_requests and not unread_messages %}
+                        <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px; font-weight: 600;">
+                            У вас нет новых уведомлений
+                        </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'friends_page' %}" class="notif-footer">Все друзья и чаты <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></a>
+                </div>
+            </div>
+                <span class="xp-badge hide-on-mobile">XP: {{ user.xp }}</span>
+            {% endif %}
+
+            <button class="theme-toggle" id="themeToggle" title="Сменить тему">
+                <i class="fa-regular fa-moon"></i>
+            </button>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'profile' %}" class="avatar-link" title="Профиль">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="User" class="avatar-img">
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random&color=fff" class="avatar-img">
+                    {% endif %}
+                </a>
+                
+                <a href="{% url 'logout' %}" class="btn-logout" title="Выйти">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            {% else %}
+                <div class="desktop-auth-only">
+                    <a href="{% url 'login' %}" style="margin-right: 15px; text-decoration: none; color: var(--text-secondary); font-weight: 700;">Войти</a>
+                    <a href="{% url 'register' %}" style="background: #2563eb; color: white; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);">Регистрация</a>
+                </div>
+            {% endif %}
+
+            <button class="burger-btn" id="burgerBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+    
+    <div style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
+        {% if messages %}
+            {% for message in messages %}
+                <div style="padding: 15px; border-radius: 12px; margin-bottom: 10px; font-weight: 700;
+                    {% if message.tags == 'success' %} background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;
+                    {% elif message.tags == 'error' %} background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;
+                    {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
+    <footer class="footer">
+        © 2026 Qadam Project. Все права защищены.
+    </footer>
+
+    <script>
+        // Скрипт для смены темы
+        const toggleBtn = document.getElementById('themeToggle');
+        const themeIcon = toggleBtn.querySelector('i');
+        const body = document.body;
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // 🔥 Скрипт для колокольчика уведомлений 🔥
+        const bellBtn = document.getElementById('bellBtn');
+        const notifDropdown = document.getElementById('notifDropdown');
+        
+        if (bellBtn && notifDropdown) {
+            bellBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notifDropdown.classList.toggle('active');
+            });
+            
+            // Закрывать уведомления при клике в любое другое место
+            document.addEventListener('click', (e) => {
+                if (!notifDropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+                    notifDropdown.classList.remove('active');
+                }
+            });
+        }
+
+        // Скрипт для открытия мобильного меню
+        const burgerBtn = document.getElementById('burgerBtn');
+        const mobileNav = document.getElementById('mobileNav');
+        const burgerIcon = burgerBtn.querySelector('i');
+
+        burgerBtn.addEventListener('click', () => {
+            mobileNav.classList.toggle('active');
+            
+            if (mobileNav.classList.contains('active')) {
+                burgerIcon.classList.remove('fa-bars');
+                burgerIcon.classList.add('fa-xmark');
+            } else {
+                burgerIcon.classList.remove('fa-xmark');
+                burgerIcon.classList.add('fa-bars');
+            }
+        });
+    </script>
+
+    <style>
+        .support-btn-float {
+            position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+            z-index: 9999; border: none; transition: all 0.3s ease;
+        }
+        .support-btn-float:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 35px rgba(37, 99, 235, 0.5); }
+        
+        .support-window {
+            position: fixed; bottom: 110px; right: 30px; width: 340px;
+            background: var(--bg-card); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            z-index: 9999; border: 1px solid var(--border-color);
+            transform: translateY(30px); opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow: hidden;
+        }
+        .support-window.active { transform: translateY(0); opacity: 1; pointer-events: all; }
+        
+        .sw-header {
+            background: linear-gradient(135deg, #1e293b, #0f172a); color: white;
+            padding: 20px 25px; font-weight: 800; font-size: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sw-status { font-size: 11px; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 4px 10px; border-radius: 10px; margin-left: 10px;}
+        
+        .sw-body { padding: 25px; }
+        .sw-input {
+            width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 14px;
+            margin-bottom: 20px; font-family: inherit; font-size: 14px; background: var(--bg-body);
+            color: var(--text-main); box-sizing: border-box; resize: none; font-weight: 500;
+        }
+        .sw-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        
+        .sw-btn {
+            width: 100%; background: #3b82f6; color: white; border: none; padding: 15px;
+            border-radius: 14px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s;
+        }
+        .sw-btn:hover { background: #2563eb; transform: translateY(-2px); }
+
+        @media (max-width: 600px) {
+            .support-window { bottom: 0; right: 0; width: 100%; border-radius: 24px 24px 0 0; }
+            .support-btn-float { bottom: 20px; right: 20px; width: 55px; height: 55px; font-size: 24px; }
+        }
+    </style>
+
+    {% if user.is_authenticated %}
+    <button class="support-btn-float" onclick="document.getElementById('supportWindow').classList.toggle('active')">
+        <i class="fa-regular fa-comment-dots"></i>
+    </button>
+
+    <div class="support-window" id="supportWindow">
+        <div class="sw-header">
+            <div style="display: flex; align-items: center;">
+                <i class="fa-solid fa-headset" style="margin-right: 10px; font-size: 20px; color: #3b82f6;"></i> 
+                Поддержка
+                <span class="sw-status">Онлайн</span>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="cursor:pointer; opacity: 0.7;" onclick="document.getElementById('supportWindow').classList.remove('active')"></i>
+        </div>
+        <div class="sw-body">
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; font-weight: 600; line-height: 1.5;">
+                Привет, <b>{{ user.first_name|default:user.username }}</b>! 👋<br> Нашел баг на платформе или есть вопросы по курсам? Напиши нам.
+            </p>
+            <form action="{% url 'support_ticket' %}" method="POST">
+                {% csrf_token %}
+                <textarea class="sw-input" name="message" rows="4" placeholder="Напишите сообщение..." required></textarea>
+                <button type="submit" class="sw-btn"><i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Отправить</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</body>
+</html>
