@@ -36,7 +36,7 @@ def index(request):
     elif current_xp < 5000: rank_name = "Средний (Middle)"
     else: rank_name = "Сеньор (Senior)"
 
-    # 2. АКТИВНЫЕ КУРСЫ (ИСПРАВЛЕНО)
+    # 2. АКТИВНЫЕ КУРСЫ
     enrolled_course_ids = LessonProgress.objects.filter(
         user=user
     ).values_list('lesson__course_id', flat=True).distinct()
@@ -56,10 +56,8 @@ def index(request):
         percent = int((completed / total) * 100) if total > 0 else 0
         
         if percent == 100:
-            # Если пройдено на 100% - просто считаем для статистики, но НЕ добавляем в список "В процессе"
             completed_courses_count += 1
         else:
-            # Добавляем в список только те, которые еще не завершены
             active_courses_stats.append({
                 'title': course.title,
                 'icon_class': getattr(course, 'icon_class', 'fa-solid fa-code'), 
@@ -135,8 +133,7 @@ def profile(request):
     elif current_xp < 5000: rank_name = "Средний (Middle)"
     else: rank_name = "Сеньор (Senior)"
 
-    # --- ИСПРАВЛЕННЫЙ ЗАПРОС ДЛЯ АКТИВНЫХ КУРСОВ В ПРОФИЛЕ ---
-    # Получаем все курсы, где юзер хотя бы записан (даже если не прошел ни одного урока)
+    # Активные курсы
     enrolled_course_ids = LessonProgress.objects.filter(
         user=user
     ).values_list('lesson__course_id', flat=True).distinct()
@@ -149,7 +146,6 @@ def profile(request):
         completed = LessonProgress.objects.filter(user=user, lesson__course=course, is_completed=True).count()
         percent = int((completed / total) * 100) if total > 0 else 0
         
-        # Показываем только если курс не закончен
         if percent < 100:
             active_courses_stats.append({
                 'title': course.title, 
@@ -160,17 +156,15 @@ def profile(request):
                 'id': course.id
             })
 
-    # Берем готовые СЕРТИФИКАТЫ
+    # Готовые СЕРТИФИКАТЫ
     completed_courses = Certificate.objects.filter(user=user).select_related('course').order_by('-issued_at')
 
-    # 🔥 НОВЫЙ ПОДСЧЕТ ДЛЯ КУРСОВ ПРЕПОДАВАТЕЛЯ 🔥
+    # Курсы ПРЕПОДАВАТЕЛЯ
     teacher_courses_raw = Course.objects.filter(author=user).order_by('-created_at')
     teacher_courses = []
     
     for c in teacher_courses_raw:
-        # Считаем уроки
         lessons_count = c.lessons.count()
-        # Считаем уникальных студентов (по записям прогресса)
         students_count = LessonProgress.objects.filter(lesson__course=c).values('user').distinct().count()
         
         teacher_courses.append({
@@ -195,10 +189,9 @@ def profile(request):
         'rank_name': rank_name, 
         'active_courses': active_courses_stats, 
         'completed_courses': completed_courses, 
-        'teacher_courses': teacher_courses, # <--- Передаем их в шаблон
+        'teacher_courses': teacher_courses,
         'friends': friends, 
         
-        # --- ОБНОВЛЕННЫЙ СПИСОК ВСЕХ ТОВАРОВ ДЛЯ МАГАЗИНА ---
         'shop_items': [
             {'name': 'Худи QADAM', 'price': 10000, 'icon': 'fa-solid fa-shirt', 'color': '#10b981'},
             {'name': 'Рюкзак для ноутбука', 'price': 9500, 'icon': 'fa-solid fa-suitcase', 'color': '#333'},
@@ -214,7 +207,6 @@ def profile(request):
 
 @login_required
 def public_profile(request, username):
-    """ Публичный профиль другого пользователя. """
     target_user = get_object_or_404(User, username=username)
     if target_user == request.user: return redirect('profile')
 
@@ -232,11 +224,9 @@ def public_profile(request, username):
 
 @login_required
 def friends_and_chat(request, username=None):
-    """ Мессенджер. """
     search_query = request.GET.get('q', '').strip()
     search_results = User.objects.filter(Q(username__icontains=search_query) | Q(first_name__icontains=search_query)).exclude(id=request.user.id)[:10] if search_query else []
 
-    # Друзья без дублей
     friendships = Friendship.objects.filter(Q(from_user=request.user) | Q(to_user=request.user), status='accepted').select_related('from_user', 'to_user')
     friends, seen_ids = [], set()
     for f in friendships:
@@ -294,40 +284,35 @@ def get_messages(request, username):
     results = [{'sender': m.sender.username, 'text': m.text, 'time': m.created_at.strftime("%H:%M"), 'is_me': m.sender == request.user} for m in msgs]
     return JsonResponse({'messages': results})
 
-# --- БЛОГ, ВЕРИФИКАЦИЯ И ПРОЧЕЕ ---
-
-from django.contrib.auth import login # убедись, что этот импорт есть вверху файла
+# ==========================================
+# 🔥 НОВАЯ МГНОВЕННАЯ РЕГИСТРАЦИЯ 🔥
+# ==========================================
 
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
-        if form.status_code == 200: # или просто if form.is_valid():
-            if form.is_valid():
-                user = form.save(commit=False)
-                user.is_active = True  # Сразу делаем пользователя активным
-                user.save()
-                
-                # Автоматически логиним пользователя после регистрации
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                
-                # Перенаправляем сразу в профиль или на главную
-                return redirect('profile') 
+        if form.is_valid():
+            # Сохраняем пользователя, но пока не коммитим в базу
+            user = form.save(commit=False)
+            user.is_active = True  # Мгновенно активируем аккаунт!
+            user.role = request.POST.get('role', 'student') # Устанавливаем роль (если она передается)
+            user.save()
+            
+            # Автоматически логиним пользователя
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            
+            # Перенаправляем сразу на дашборд (индексную страницу)
+            return redirect('index')
     else:
         form = CustomUserCreationForm()
+        
     return render(request, 'users/register.html', {'form': form})
 
 def verify_email(request):
-    if 'email_code' not in request.session: return redirect('register')
-    if request.method == 'POST':
-        form = EmailVerificationForm(request.POST)
-        if form.is_valid() and form.cleaned_data.get('code') == request.session.get('email_code'):
-            reg_data = request.session.get('reg_data')
-            new_user = User.objects.create_user(username=reg_data['username'], email=reg_data['email'], password=request.session.get('reg_password'))
-            new_user.role = request.session.get('reg_role', 'student')
-            new_user.save()
-            login(request, new_user, backend='django.contrib.auth.backends.ModelBackend')
-            return redirect('index')
-    return render(request, 'users/verify_email.html', {'form': EmailVerificationForm()})
+    # Эта функция больше не нужна, но мы оставляем заглушку, 
+    # чтобы сайт не сломался, если в urls.py остался путь к ней.
+    # Если кто-то сюда попадет - его просто перекинет на главную.
+    return redirect('index')
 
 def logout_view(request):
     logout(request)
@@ -352,5 +337,6 @@ def blog_detail(request, post_slug):
 
 @login_required
 def support_ticket(request):
-    if request.method == 'POST': messages.success(request, '🚀 Заявка отправлена!')
+    if request.method == 'POST': 
+        messages.success(request, '🚀 Заявка отправлена!')
     return redirect(request.META.get('HTTP_REFERER', 'index'))
