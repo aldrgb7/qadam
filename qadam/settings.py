@@ -116,12 +116,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # --- НАСТРОЙКИ ПОЧТЫ (SMTP) ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'aldiargabitov53@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ewij ieqd fzck mpod')
+# Для защиты переключаем на вывод в консоль, чтобы избежать таймаутов от Google
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Эти строки можешь просто закомментировать (поставить # в начале) или оставить, они теперь не влияют
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'aldiargabitov53@gmail.com')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ewij ieqd fzck mpod')
 
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend',  # Наш новый способ
