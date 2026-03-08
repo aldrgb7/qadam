@@ -177,9 +177,8 @@
             </div>
 
             <div class="chat-input-area">
-                <form method="POST" class="chat-form">
-                    {% csrf_token %}
-                    <input type="text" name="text" class="chat-input" placeholder="Написать сообщение..." required autocomplete="off" autofocus>
+                <form id="chatForm" class="chat-form">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Написать сообщение..." required autocomplete="off" autofocus>
                     <button type="submit" class="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
                 </form>
             </div>
@@ -195,55 +194,6 @@
 
 {% if active_user %}
 <script>
-    // 1. Прокрутка вниз при загрузке страницы
-    const chatBox = document.getElementById('chatBox');
-    if (chatBox) {
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // 2. Функция для подгрузки новых сообщений без перезагрузки
-    function updateChat() {
-        const username = "{{ active_user.username }}";
-        if (!username) return;
-
-        fetch(`/api/messages/${username}/`)
-            .then(response => response.json())
-            .then(data => {
-                const chatBox = document.getElementById('chatBox');
-                if (!chatBox) return;
-                
-                let chatHtml = '';
-                if (data.messages.length === 0) {
-                    chatHtml = `
-                        <div class="empty-chat-state">
-                            <i class="fa-regular fa-paper-plane"></i>
-                            Напишите привет пользователю <b>{{ active_user.first_name|default:active_user.username }}</b>! 👋
-                        </div>`;
-                } else {
-                    data.messages.forEach(msg => {
-                        const bubbleClass = msg.is_me ? 'msg-sent' : 'msg-received';
-                        const checkIcon = (msg.is_me && msg.is_read) ? '<i class="fa-solid fa-check-double" style="margin-left: 5px; color: #93c5fd;"></i>' : '';
-                        
-                        chatHtml += `
-                            <div class="msg-bubble ${bubbleClass}">
-                                ${msg.text}
-                                <span class="msg-time">${msg.time} ${checkIcon}</span>
-                            </div>
-                        `;
-                    });
-                }
-                
-                chatBox.innerHTML = chatHtml;
-                chatBox.scrollTop = chatBox.scrollHeight;
-            })
-            .catch(error => console.error('Ошибка обновления чата:', error));
-    }
-
-    // 3. Запускаем опрос сервера каждые 3 секунды
-    setInterval(updateChat, 3000);
-</script>
-{% if active_user %}
-<script>
     const activeUsername = "{{ active_user.username }}";
     const currentUsername = "{{ user.username }}";
     
@@ -251,7 +201,7 @@
     const chatBox = document.getElementById('chatBox');
     if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Определяем протокол (ws:// для локалки, wss:// для продакшена)
+    // Определяем протокол
     const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
     
     // ПОДКЛЮЧАЕМСЯ К ВЕБ-СОКЕТУ!
@@ -263,16 +213,16 @@
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         
-        // Убираем картинку "пустого чата", если она есть
+        // Убираем картинку "пустого чата"
         const emptyState = chatBox.querySelector('.empty-chat-state');
         if (emptyState) emptyState.remove();
 
-        // Определяем, кто написал: я или друг
+        // Определяем, кто написал
         const isMe = data.sender === currentUsername;
         const bubbleClass = isMe ? 'msg-sent' : 'msg-received';
         const checkIcon = isMe ? '<i class="fa-solid fa-check-double" style="margin-left: 5px; color: #93c5fd;"></i>' : '';
 
-        // Рисуем сообщение на экране
+        // Рисуем сообщение
         const msgHtml = `
             <div class="msg-bubble ${bubbleClass}">
                 ${data.message}
@@ -281,16 +231,16 @@
         `;
         
         chatBox.insertAdjacentHTML('beforeend', msgHtml);
-        chatBox.scrollTop = chatBox.scrollHeight; // Скроллим вниз
+        chatBox.scrollTop = chatBox.scrollHeight;
     };
 
     chatSocket.onclose = function(e) {
-        console.error('Чат неожиданно закрылся');
+        console.error('Чат закрылся. Проверь терминал сервера!');
     };
 
-    // ПЕРЕХВАТЫВАЕМ ОТПРАВКУ ФОРМЫ (чтобы страница не перезагружалась)
-    const chatForm = document.querySelector('.chat-form');
-    const chatInput = document.querySelector('.chat-input');
+    // 🔥 ПЕРЕХВАТЫВАЕМ ФОРМУ, ЧТОБЫ СТРАНИЦА НЕ ПЕРЕЗАГРУЖАЛАСЬ 🔥
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
 
     chatForm.addEventListener('submit', function(e) {
         e.preventDefault(); // Останавливаем стандартную перезагрузку страницы!
@@ -305,6 +255,5 @@
         }
     });
 </script>
-{% endif %}
 {% endif %}
 {% endblock %}
