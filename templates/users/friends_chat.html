@@ -242,6 +242,69 @@
     // 3. Запускаем опрос сервера каждые 3 секунды
     setInterval(updateChat, 3000);
 </script>
-{% endif %}
+{% if active_user %}
+<script>
+    const activeUsername = "{{ active_user.username }}";
+    const currentUsername = "{{ user.username }}";
+    
+    // Прокрутка вниз при загрузке страницы
+    const chatBox = document.getElementById('chatBox');
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 
+    // Определяем протокол (ws:// для локалки, wss:// для продакшена)
+    const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+    
+    // ПОДКЛЮЧАЕМСЯ К ВЕБ-СОКЕТУ!
+    const chatSocket = new WebSocket(
+        wsProtocol + window.location.host + '/ws/chat/' + activeUsername + '/'
+    );
+
+    // КОГДА ПРИЛЕТАЕТ НОВОЕ СООБЩЕНИЕ ОТ СЕРВЕРА
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        // Убираем картинку "пустого чата", если она есть
+        const emptyState = chatBox.querySelector('.empty-chat-state');
+        if (emptyState) emptyState.remove();
+
+        // Определяем, кто написал: я или друг
+        const isMe = data.sender === currentUsername;
+        const bubbleClass = isMe ? 'msg-sent' : 'msg-received';
+        const checkIcon = isMe ? '<i class="fa-solid fa-check-double" style="margin-left: 5px; color: #93c5fd;"></i>' : '';
+
+        // Рисуем сообщение на экране
+        const msgHtml = `
+            <div class="msg-bubble ${bubbleClass}">
+                ${data.message}
+                <span class="msg-time">${data.time} ${checkIcon}</span>
+            </div>
+        `;
+        
+        chatBox.insertAdjacentHTML('beforeend', msgHtml);
+        chatBox.scrollTop = chatBox.scrollHeight; // Скроллим вниз
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Чат неожиданно закрылся');
+    };
+
+    // ПЕРЕХВАТЫВАЕМ ОТПРАВКУ ФОРМЫ (чтобы страница не перезагружалась)
+    const chatForm = document.querySelector('.chat-form');
+    const chatInput = document.querySelector('.chat-input');
+
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Останавливаем стандартную перезагрузку страницы!
+        
+        const message = chatInput.value.trim();
+        if (message) {
+            // Мгновенно пуляем сообщение в сокет
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            chatInput.value = ''; // Очищаем поле ввода
+        }
+    });
+</script>
+{% endif %}
+{% endif %}
 {% endblock %}

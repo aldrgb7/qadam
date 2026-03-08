@@ -240,11 +240,10 @@ def friends_and_chat(request, username=None):
     
     if username:
         active_user = get_object_or_404(User, username=username)
-        if request.method == 'POST':
-            text = request.POST.get('text', '').strip()
-            if text: Message.objects.create(sender=request.user, receiver=active_user, text=text)
-            return redirect('friends_chat', username=username)
-
+        
+        # УДАЛЕНО: Обработка request.method == 'POST', так как теперь это делает WebSockets
+        
+        # Просто загружаем историю сообщений при открытии страницы
         messages_list = Message.objects.filter((Q(sender=request.user) & Q(receiver=active_user)) | (Q(sender=active_user) & Q(receiver=request.user))).order_by('created_at')
         messages_list.filter(receiver=request.user, is_read=False).update(is_read=True)
 
@@ -278,6 +277,7 @@ def remove_friend(request, username):
 
 @login_required
 def get_messages(request, username):
+    # Оставляем эту функцию как резервный API (на всякий случай)
     other_user = get_object_or_404(User, username=username)
     msgs = Message.objects.filter((Q(sender=request.user) & Q(receiver=other_user)) | (Q(sender=other_user) & Q(receiver=request.user))).order_by('created_at')
     msgs.filter(receiver=request.user, is_read=False).update(is_read=True)
@@ -292,16 +292,12 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            # Сохраняем пользователя, но пока не коммитим в базу
             user = form.save(commit=False)
             user.is_active = True  # Мгновенно активируем аккаунт!
-            user.role = request.POST.get('role', 'student') # Устанавливаем роль (если она передается)
+            user.role = request.POST.get('role', 'student') 
             user.save()
             
-            # Автоматически логиним пользователя
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            
-            # Перенаправляем сразу на дашборд (индексную страницу)
             return redirect('index')
     else:
         form = CustomUserCreationForm()
@@ -309,9 +305,6 @@ def register(request):
     return render(request, 'users/register.html', {'form': form})
 
 def verify_email(request):
-    # Эта функция больше не нужна, но мы оставляем заглушку, 
-    # чтобы сайт не сломался, если в urls.py остался путь к ней.
-    # Если кто-то сюда попадет - его просто перекинет на главную.
     return redirect('index')
 
 def logout_view(request):
