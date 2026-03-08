@@ -8,44 +8,33 @@ from .models import Course, Lesson, LessonProgress, Quiz, Question, Choice, Cate
 from .forms import ReviewForm, CourseCreateForm, LessonCreateForm, LessonCommentForm
 from django.urls import reverse
 
-
 User = get_user_model()
 
 # ==========================================
 # 1. СПИСОК КУРСОВ (КАТАЛОГ)
 # ==========================================
 def course_list(request):
-    # Берем только опубликованные курсы
     courses = Course.objects.filter(status='published').order_by('-created_at')
-    
-    # Загружаем все категории для вывода в фильтре
     categories = Category.objects.all()
 
-    # 1. Поиск по названию
     query = request.GET.get('q')
     if query:
-        courses = courses.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        )
+        courses = courses.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
-    # 2. Фильтр по сложности (один уровень)
     level_filter = request.GET.get('level')
     if level_filter:
         courses = courses.filter(level=level_filter)
 
-    # 3. Фильтр по предметам (категориям) - массив чекбоксов
     selected_categories = request.GET.getlist('category')
     if selected_categories:
         courses = courses.filter(category__id__in=selected_categories)
 
-    # ПРОВЕРКА ЗАПИСЕЙ: Собираем ID курсов, где у юзера есть прогресс
     enrolled_course_ids = []
     if request.user.is_authenticated:
         enrolled_course_ids = LessonProgress.objects.filter(
             user=request.user
         ).values_list('lesson__course_id', flat=True).distinct()
 
-    # Топ пользователей для модального окна
     top_users = User.objects.annotate(
         completed_lessons_count=Count(
             'lessonprogress', 
@@ -55,16 +44,15 @@ def course_list(request):
 
     context = {
         'courses': courses,
-        'categories': categories, # Передаем категории в HTML
-        'selected_categories': [int(c) for c in selected_categories if c.isdigit()], # Для галочек
+        'categories': categories,
+        'selected_categories': [int(c) for c in selected_categories if c.isdigit()],
         'level_choices': Course.LEVEL_CHOICES,
-        'selected_level': level_filter, # Для радио-кнопки
+        'selected_level': level_filter,
         'search_query': query,
         'top_users': top_users,
         'enrolled_course_ids': enrolled_course_ids,
     }
     return render(request, 'courses.html', context)
-
 
 # ==========================================
 # ФУНКЦИЯ ЗАПИСИ НА КУРС
@@ -90,7 +78,6 @@ def enroll_course(request, course_id):
         messages.info(request, "Вы уже записаны на этот курс.")
         
     return redirect('course_detail', course_id=course.id)
-
 
 # ==========================================
 # 2. ДЕТАЛИ КУРСА
@@ -138,22 +125,46 @@ def course_detail(request, course_id):
     }
     return render(request, 'course_detail.html', context)
 
-
-# Не забудь добавить импорт новых моделей и формы в начале файла!
-# from .models import ..., LessonComment
-# from .forms import ..., LessonCommentForm
-
 # ==========================================
-# 3. ПРОСМОТР УРОКА (ТЕОРИЯ + ВИДЕО + КОММЕНТАРИИ)
+# 3. ПРОСМОТР УРОКА (НОВАЯ УМНАЯ ЛОГИКА С ЗАМКАМИ 🔒)
 # ==========================================
 @login_required
 def lesson_detail(request, course_id, lesson_id):
     course = get_object_or_404(Course, id=course_id)
     lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
-    
-    # Получаем прогресс
-    progress = LessonProgress.objects.filter(user=request.user, lesson=lesson).first()
-    is_completed = progress.is_completed if progress else False
+
+    # 1. ПОЛУЧАЕМ ВСЕ ПРОЙДЕННЫЕ УРОКИ ЮЗЕРА (Списком ID)
+    completed_lesson_ids = list(LessonProgress.objects.filter(
+        user=request.user, 
+        lesson__course=course, 
+        is_completed=True
+    ).values_list('lesson_id', flat=True))
+
+    # 2. СТРОИМ УМНЫЙ ПЛЕЙЛИСТ (Логика блокировки)
+    all_lessons = course.lessons.all().order_by('order')
+    playlist = []
+    is_locked = False # Первый урок всегда открыт
+
+    for l in all_lessons:
+        l_is_completed = l.id in completed_lesson_ids
+        playlist.append({
+            'lesson': l,
+            'is_completed': l_is_completed,
+            'is_locked': is_locked
+        })
+        # Если текущий урок НЕ пройден, все следующие за ним блокируются 🔒
+        if not l_is_completed and request.user != course.author:
+            is_locked = True
+
+    # 3. ЗАЩИТА ОТ ЧИТЕРОВ (Если попытались зайти по прямой ссылке)
+    if request.user != course.author:
+        for item in playlist:
+            if item['lesson'].id == lesson.id and item['is_locked']:
+                messages.warning(request, "🔒 Этот урок пока закрыт! Пройдите предыдущие.")
+                return redirect('course_detail', course_id=course.id)
+
+    # Статус текущего урока
+    is_completed = lesson.id in completed_lesson_ids
 
     # ИЩЕМ СЛЕДУЮЩИЙ И ПРЕДЫДУЩИЙ УРОК ДЛЯ НАВИГАЦИИ
     next_lesson = course.lessons.filter(order__gt=lesson.order).order_by('order').first()
@@ -165,7 +176,7 @@ def lesson_detail(request, course_id, lesson_id):
         questions = lesson.quiz.questions.all()
 
     # --- ЛОГИКА КОММЕНТАРИЕВ ---
-    comments = lesson.comments.all() # Берем все комменты урока
+    comments = lesson.comments.all() 
     
     if request.method == 'POST':
         comment_form = LessonCommentForm(request.POST)
@@ -187,11 +198,11 @@ def lesson_detail(request, course_id, lesson_id):
         'has_quiz': has_quiz,
         'next_lesson': next_lesson,
         'prev_lesson': prev_lesson,
-        'comments': comments,          # Передаем комменты
-        'comment_form': comment_form,  # Передаем форму
+        'comments': comments,          
+        'comment_form': comment_form,
+        'playlist': playlist, # Передаем плейлист с замками
     }
     return render(request, 'lesson_detail.html', context)
-
 
 # ==========================================
 # 4. ЗАВЕРШЕНИЕ УРОКА
@@ -225,7 +236,6 @@ def complete_lesson(request, lesson_id):
         ).count()
         
         if total_lessons > 0 and completed_lessons == total_lessons:
-            # Студент прошел все уроки! Проверяем, нет ли уже сертификата
             cert, cert_created = Certificate.objects.get_or_create(
                 user=request.user,
                 course=course
@@ -236,7 +246,6 @@ def complete_lesson(request, lesson_id):
         messages.info(request, 'Урок уже был пройден.')
 
     return redirect('lesson_detail', course_id=course.id, lesson_id=lesson.id)
-
 
 # ==========================================
 # 5. ТЕСТЫ
@@ -324,7 +333,6 @@ def leaderboard(request):
     }
     return render(request, 'leaderboard.html', context)
 
-
 # ==========================================
 # 7. СОЗДАНИЕ КУРСА ПРЕПОДАВАТЕЛЕМ
 # ==========================================
@@ -347,7 +355,6 @@ def create_course(request):
         form = CourseCreateForm()
 
     return render(request, 'create_course.html', {'form': form})
-
 
 # ==========================================
 # 8. КОНСТРУКТОР: ДОБАВЛЕНИЕ УРОКА
@@ -393,18 +400,17 @@ def rate_recommendation(request, course_id):
     
     return JsonResponse({'status': 'error'}, status=400)
 
-
 # ==========================================
 # 10. УМНЫЙ ПОИСК (API ДЛЯ AJAX)
 # ==========================================
 def api_search_courses(request):
     query = request.GET.get('q', '').strip()
     
-    if len(query) >= 2: # Ищем только если введено 2 и более символа
+    if len(query) >= 2:
         courses = Course.objects.filter(
             Q(title__icontains=query) | Q(description__icontains=query),
             status='published'
-        )[:5] # Берем только топ-5 совпадений для красоты
+        )[:5] 
         
         results = []
         for c in courses:
@@ -412,7 +418,7 @@ def api_search_courses(request):
                 'id': c.id,
                 'title': c.title,
                 'author': c.author.username if c.author else 'QADAM',
-                'url': reverse('course_detail', kwargs={'course_id': c.id}), # Генерируем ссылку
+                'url': reverse('course_detail', kwargs={'course_id': c.id}), 
                 'image': c.image.url if c.image else None,
                 'icon': getattr(c, 'icon_class', 'fa-solid fa-book')
             })
@@ -427,10 +433,8 @@ def view_certificate(request, certificate_id):
     cert = get_object_or_404(Certificate, id=certificate_id)
     return render(request, 'certificate.html', {'certificate': cert})
 
-
 @login_required
 def lesson_builder(request, lesson_id):
-    """ Фронтенд-конструктор тестов для урока """
     lesson = get_object_or_404(Lesson, id=lesson_id, course__author=request.user)
     
     quiz, created = Quiz.objects.get_or_create(
@@ -457,13 +461,10 @@ def lesson_builder(request, lesson_id):
             
             messages.success(request, 'Вопрос успешно сохранен!')
             
-            # 🔥 МАГИЯ ДВУХ КНОПОК 🔥
             action = request.POST.get('action')
             if action == 'save_exit':
-                # Если нажали "Сохранить и выйти", кидаем обратно в управление уроками
                 return redirect('add_lesson', course_id=lesson.course.id)
             else:
-                # Если нажали "Сохранить и добавить еще", перезагружаем эту же страницу
                 return redirect('lesson_builder', lesson_id=lesson.id)
 
     questions = quiz.questions.all().prefetch_related('choices')

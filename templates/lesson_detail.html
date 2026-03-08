@@ -315,26 +315,43 @@
                 <i class="fa-solid fa-list" style="margin-right: 10px; color: var(--primary-blue);"></i> Уроки курса
             </div>
             <div class="playlist-items">
-                {% for item in course.lessons.all %}
-                    <a href="{% url 'lesson_detail' course.id item.pk %}" class="playlist-item {% if item.pk == lesson.pk %}active{% endif %}">
-                        <div style="width: 25px; color: {% if item.pk == lesson.pk %}var(--primary-blue){% else %}var(--text-muted){% endif %}; font-weight: 900; font-size: 14px;">
-                            {{ item.order|default:forloop.counter }}
-                        </div>
-                        <div style="flex-grow: 1;">
-                            <div class="item-title">{{ item.title }}</div>
-                            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 5px; margin-top: 4px;">
-                                {% if item.video_url %}
-                                    <i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Видео
-                                {% else %}
-                                    <i class="fa-solid fa-file-lines"></i> Текст
-                                {% endif %}
+                {% for item in playlist %}
+                    {% if item.is_locked %}
+                        <div class="playlist-item" style="opacity: 0.5; cursor: not-allowed; background: var(--bg-body);">
+                            <div style="width: 25px; color: var(--text-muted); font-weight: 900; font-size: 14px;">
+                                {{ item.lesson.order|default:forloop.counter }}
                             </div>
+                            <div style="flex-grow: 1;">
+                                <div class="item-title">{{ item.lesson.title }}</div>
+                                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 5px; margin-top: 4px;">
+                                    <i class="fa-solid fa-lock"></i> Недоступно
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-lock item-icon" style="color: var(--text-muted); font-size: 16px;"></i>
                         </div>
-                        
-                        {% if item.pk == lesson.pk %}
-                            <i class="fa-solid fa-circle-play item-icon" style="font-size: 18px;"></i>
-                        {% endif %}
-                    </a>
+                    {% else %}
+                        <a href="{% url 'lesson_detail' course.id item.lesson.pk %}" class="playlist-item {% if item.lesson.pk == lesson.pk %}active{% endif %}">
+                            <div style="width: 25px; color: {% if item.lesson.pk == lesson.pk %}var(--primary-blue){% else %}var(--text-muted){% endif %}; font-weight: 900; font-size: 14px;">
+                                {{ item.lesson.order|default:forloop.counter }}
+                            </div>
+                            <div style="flex-grow: 1;">
+                                <div class="item-title">{{ item.lesson.title }}</div>
+                                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 5px; margin-top: 4px;">
+                                    {% if item.lesson.video_url %}
+                                        <i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Видео
+                                    {% else %}
+                                        <i class="fa-solid fa-file-lines"></i> Текст
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if item.is_completed %}
+                                <i class="fa-solid fa-circle-check item-icon" style="color: #10b981; font-size: 18px;"></i>
+                            {% elif item.lesson.pk == lesson.pk %}
+                                <i class="fa-solid fa-circle-play item-icon" style="font-size: 18px;"></i>
+                            {% endif %}
+                        </a>
+                    {% endif %}
                 {% endfor %}
             </div>
         </div>
