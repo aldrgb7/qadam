@@ -2,9 +2,14 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class CustomUser(AbstractUser):
-    """
-    Расширенная модель пользователя.
-    """
+    # ... твои старые поля (role, phone_number, avatar, xp, level) ...
+
+    # 🔥 НОВЫЕ ПОЛЯ ДЛЯ СТАТУСА 🔥
+    is_online = models.BooleanField(default=False, verbose_name='В сети')
+    last_seen = models.DateTimeField(blank=True, null=True, verbose_name='Был(а) в сети')
+
+    def __str__(self):
+        return f"{self.username} ({self.get_role_display()})"
     
     # Роли пользователя
     ROLE_CHOICES = (

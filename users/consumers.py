@@ -2,7 +2,9 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from .models import Message
+
 
 User = get_user_model()
 
@@ -23,9 +25,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+        
+        # 🔥 ПОЛЬЗОВАТЕЛЬ ЗАШЕЛ В ЧАТ -> ОН ОНЛАЙН 🔥
+        await self.update_user_status(is_online=True)
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        
+        # 🔥 ПОЛЬЗОВАТЕЛЬ ЗАКРЫЛ ВКЛАДКУ -> СОХРАНЯЕМ ВРЕМЯ 🔥
+        if self.user.is_authenticated:
+            await self.update_user_status(is_online=False)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -57,3 +66,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, text):
         return Message.objects.create(sender=self.user, receiver=self.other_user, text=text)
+    
+    
+    # 🔥 ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ СТАТУСА 🔥
+    @database_sync_to_async
+    def update_user_status(self, is_online):
+        self.user.is_online = is_online
+        if not is_online:
+            self.user.last_seen = timezone.now()
+        self.user.save()

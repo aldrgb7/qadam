@@ -41,6 +41,7 @@
     .contact-name { font-weight: 800; font-size: 15px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .contact-status { font-size: 12px; font-weight: 600; opacity: 0.7; margin-top: 2px; }
     .contact-item.active .contact-status { color: rgba(255,255,255,0.8); }
+    .contact-status.offline { color: var(--text-muted); }
 
     .section-label { font-size: 11px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; padding: 15px 15px 5px 15px; display: block;}
 
@@ -51,6 +52,7 @@
     .chat-header-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
     .chat-header-name { font-size: 18px; font-weight: 800; color: var(--text-main); margin: 0; }
     .chat-header-status { font-size: 13px; color: #10b981; font-weight: 700; }
+    .chat-header-status.offline { color: var(--text-muted); }
 
     .chat-messages { flex-grow: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: var(--bg-card); }
     
@@ -122,7 +124,13 @@
                     {% endif %}
                     <div class="contact-info">
                         <p class="contact-name">{{ friend.first_name|default:friend.username }}</p>
-                        <span class="contact-status">Онлайн</span>
+                        <span class="contact-status {% if not friend.is_online %}offline{% endif %}">
+                            {% if friend.is_online %}
+                                В сети
+                            {% else %}
+                                Не в сети
+                            {% endif %}
+                        </span>
                     </div>
                 </a>
             {% empty %}
@@ -147,7 +155,15 @@
                     {% endif %}
                     <div>
                         <h3 class="chat-header-name">{{ active_user.first_name|default:active_user.username }}</h3>
-                        <span class="chat-header-status">В сети</span>
+                        <span class="chat-header-status {% if not active_user.is_online %}offline{% endif %}">
+                            {% if active_user.is_online %}
+                                В сети
+                            {% elif active_user.last_seen %}
+                                Был(а) в сети: {{ active_user.last_seen|date:"d M в H:i" }}
+                            {% else %}
+                                Был(а) в сети недавно
+                            {% endif %}
+                        </span>
                     </div>
                 </a>
                 <a href="{% url 'public_profile' active_user.username %}" style="color: var(--primary-blue); background: rgba(37,99,235,0.1); padding: 8px 15px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none;">
@@ -197,32 +213,25 @@
     const activeUsername = "{{ active_user.username }}";
     const currentUsername = "{{ user.username }}";
     
-    // Прокрутка вниз при загрузке страницы
     const chatBox = document.getElementById('chatBox');
     if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Определяем протокол
     const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
     
-    // ПОДКЛЮЧАЕМСЯ К ВЕБ-СОКЕТУ!
     const chatSocket = new WebSocket(
         wsProtocol + window.location.host + '/ws/chat/' + activeUsername + '/'
     );
 
-    // КОГДА ПРИЛЕТАЕТ НОВОЕ СООБЩЕНИЕ ОТ СЕРВЕРА
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         
-        // Убираем картинку "пустого чата"
         const emptyState = chatBox.querySelector('.empty-chat-state');
         if (emptyState) emptyState.remove();
 
-        // Определяем, кто написал
         const isMe = data.sender === currentUsername;
         const bubbleClass = isMe ? 'msg-sent' : 'msg-received';
         const checkIcon = isMe ? '<i class="fa-solid fa-check-double" style="margin-left: 5px; color: #93c5fd;"></i>' : '';
 
-        // Рисуем сообщение
         const msgHtml = `
             <div class="msg-bubble ${bubbleClass}">
                 ${data.message}
@@ -235,23 +244,21 @@
     };
 
     chatSocket.onclose = function(e) {
-        console.error('Чат закрылся. Проверь терминал сервера!');
+        console.error('Чат закрылся.');
     };
 
-    // 🔥 ПЕРЕХВАТЫВАЕМ ФОРМУ, ЧТОБЫ СТРАНИЦА НЕ ПЕРЕЗАГРУЖАЛАСЬ 🔥
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
 
     chatForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Останавливаем стандартную перезагрузку страницы!
+        e.preventDefault(); 
         
         const message = chatInput.value.trim();
         if (message) {
-            // Мгновенно пуляем сообщение в сокет
             chatSocket.send(JSON.stringify({
                 'message': message
             }));
-            chatInput.value = ''; // Очищаем поле ввода
+            chatInput.value = ''; 
         }
     });
 </script>
