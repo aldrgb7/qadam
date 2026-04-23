@@ -159,20 +159,41 @@ def profile(request):
     # Готовые СЕРТИФИКАТЫ
     completed_courses = Certificate.objects.filter(user=user).select_related('course').order_by('-issued_at')
 
-    # Курсы ПРЕПОДАВАТЕЛЯ
+   # Курсы ПРЕПОДАВАТЕЛЯ (СО СТАТИСТИКОЙ)
     teacher_courses_raw = Course.objects.filter(author=user).order_by('-created_at')
     teacher_courses = []
     
     for c in teacher_courses_raw:
-        lessons_count = c.lessons.count()
-        students_count = LessonProgress.objects.filter(lesson__course=c).values('user').distinct().count()
+        total_lessons = c.lessons.count()
+        
+        # 1. Находим уникальных студентов на курсе
+        student_ids = LessonProgress.objects.filter(lesson__course=c).values_list('user', flat=True).distinct()
+        students_in_course = User.objects.filter(id__in=student_ids)
+        
+        student_stats = []
+        for st in students_in_course:
+            # 2. Считаем пройденные уроки для каждого
+            completed_count = LessonProgress.objects.filter(user=st, lesson__course=c, is_completed=True).count()
+            percent = int((completed_count / total_lessons) * 100) if total_lessons > 0 else 0
+            
+            student_stats.append({
+                'username': st.username,
+                'full_name': f"{st.first_name} {st.last_name}".strip() or st.username,
+                'completed': completed_count,
+                'total': total_lessons,
+                'percent': percent
+            })
+            
+        # 3. Сортируем: кто больше прошел - тот сверху
+        student_stats.sort(key=lambda x: x['percent'], reverse=True)
         
         teacher_courses.append({
             'id': c.id,
             'title': c.title,
             'status': c.status,
-            'total_lessons': lessons_count,
-            'students_count': students_count
+            'total_lessons': total_lessons,
+            'students_count': len(student_stats),
+            'student_stats': student_stats  # Передаем список студентов в HTML
         })
 
     # Друзья
