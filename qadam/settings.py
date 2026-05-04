@@ -6,12 +6,25 @@ import dj_database_url  # <--- ДОБАВЛЕНО ДЛЯ RENDER
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-change-me-later-for-production'
+# Бьет ключ из настроек Render. Если его там нет (например, на твоем компе) - ставит дефолтный.
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-later-for-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Если проект запускается на Render, DEBUG автоматически станет False.
+DEBUG = 'RENDER' not in os.environ
 
-ALLOWED_HOSTS = ['*']  # Разрешаем все хосты для разработки
+# Разрешенные хосты. Render автоматически даст переменную RENDER_EXTERNAL_HOSTNAME
+ALLOWED_HOSTS = []
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+else:
+    ALLOWED_HOSTS.append('*') # Для локальной разработки
+
+# Доверенные источники для запросов (чтобы работала админка на HTTPS)
+CSRF_TRUSTED_ORIGINS = []
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
 # Application definition
 INSTALLED_APPS = [  
@@ -69,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'qadam_db',
         'USER': 'postgres',
-        'PASSWORD': 'aldi2138D', # Тот самый, что вводил в pgAdmin
+        'PASSWORD': 'aldi2138D', # Твой локальный пароль
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -105,10 +118,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 
-# Добавляем вот эту строку (это папка, куда сервер соберет все файлы):
+# Папка, куда сервер соберет все файлы
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']  # Папка static в корне
+
+# Включаем сжатие и кэширование статики для скорости
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -118,22 +134,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 
 # --- НАСТРОЙКИ ПОЧТЫ (SMTP) ---
-# Для защиты переключаем на вывод в консоль, чтобы избежать таймаутов от Google
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Эти строки можешь просто закомментировать (поставить # в начале) или оставить, они теперь не влияют
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'aldiargabitov53@gmail.com')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ewij ieqd fzck mpod')
-
-# Эти строки можешь просто закомментировать (поставить # в начале) или оставить, они теперь не влияют
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'aldiargabitov53@gmail.com')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ewij ieqd fzck mpod')
 
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend',  # Наш новый способ
@@ -187,7 +188,6 @@ JAZZMIN_SETTINGS = {
     "order_with_respect_to": ["users", "courses", "analytics", "auth"],
 }
 
-# --- ИСПРАВЛЕННЫЙ ЦВЕТОВОЙ КОНФИГ (Текст будет виден!) ---
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
@@ -195,19 +195,19 @@ JAZZMIN_UI_TWEAKS = {
     "brand_small_text": False,
     "brand_colour": "navbar-primary",
     "accent": "accent-primary",
-    "navbar": "navbar-white navbar-light",  # Белая шапка, темный текст
+    "navbar": "navbar-white navbar-light",
     "no_navbar_border": False,
     "navbar_fixed": False,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": False,
-    "sidebar": "sidebar-light-primary",     # Светлый сайдбар, темный текст
+    "sidebar": "sidebar-light-primary",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": False,
     "sidebar_nav_compact_style": False,
-    "theme": "spacelab",                    # Контрастная тема
-    "dark_mode_theme": None,                # Отключаем темную тему в админке
+    "theme": "spacelab",
+    "dark_mode_theme": None,
     "button_classes": {
         "primary": "btn-primary",
         "secondary": "btn-secondary",
@@ -218,13 +218,12 @@ JAZZMIN_UI_TWEAKS = {
     }
 }
 
-
 # ==========================================
 # WEBSOCKETS (DJANGO CHANNELS)
 # ==========================================
 ASGI_APPLICATION = 'qadam.asgi.application'
 
-# Пока используем память для тестов. Для продакшена (Render) потом заменим на Redis
+# Пока используем память для тестов. 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
